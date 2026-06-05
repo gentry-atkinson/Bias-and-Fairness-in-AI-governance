@@ -1,0 +1,13 @@
+dataset,rows,columns,duplicate_rows,duplicate_pct,numeric_columns,categorical_columns
+booking_2010_2012,289061,43,0,0.0,26,17
+booking_2013_2016,289869,43,0,0.0,26,17
+case_data,271699,81,0,0.0,56,25
+events,52853,16,0,0.0,12,3
+mental_health_events,94336,7,1,0.0,3,2
+person_data,123571,7,5130,4.15,5,1
+pretrial_booking_bridge,429635,11,0,0.0,4,4
+pretrial_charge_interview,397886,37,0,0.0,5,32
+pretrial_defendants,238567,13,0,0.0,3,8
+revocation,19258,81,0,0.0,55,12
+sentencing_post2013,84209,14,0,0.0,11,2
+sentencing_pre2013,63122,14,0,0.0,11,2
