@@ -2,7 +2,6 @@
 
 This repository supports an eight-week summer research project on bias and fairness in criminal risk assessment systems, starting with exploratory analysis of the Travis County dataset.
 
-## Current Focus
 
 - inventory the Travis County files and reverse-engineer table relationships
 - identify candidate proxy variables that may encode protected attributes indirectly
