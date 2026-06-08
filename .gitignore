@@ -216,3 +216,13 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Private research data
+data/**/*.csv
+data/**/*.xlsx
+data/**/*.xls
+data/**/*.dta
+
+!data/README.md
+!data/**/README.md
+!data/**/.gitkeep
