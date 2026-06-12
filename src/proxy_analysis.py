@@ -1,0 +1,244 @@
+"""
+proxy_analysis.py
+-----------------
+Week 2 deliverable: proxy variable discovery for the Travis County
+pretrial dataset.
+
+Tests every feature against three protected attributes
+(race, gender, age) using the statistically correct test for each
+variable-type combination, then exports a ranked association table.
+
+Run from the project root:
+    python src/proxy_analysis.py
+
+Output:
+    outputs/proxy_associations.csv
+"""
+
+from __future__ import annotations
+
+import logging
+import sys
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from scipy import stats
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
+log = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+
+DATA_PATH = Path("data/interim/travis_county_pretrial_analysis_df.csv")
+OUTPUT_PATH = Path("outputs/proxy_associations.csv")
+
+# Professor-specified protected attributes.
+# Maps display name → column name in the dataframe.
+PROTECTED_ATTRIBUTES: dict[str, str] = {
+    "race":   "race",
+    "gender": "sex",           # dataset column is 'sex'
+    "age":    "age_at_booking", # dataset column is 'age_at_booking'
+}
+
+# Columns to skip entirely (identifiers, timestamps)
+SKIP_COLUMNS: set[str] = {"pretrial_id", "booking_date", "age_group"}
+
+# These should be forced to categorical regardless of dtype
+# (zip codes are stored as floats but are not numeric quantities)
+FORCE_CATEGORICAL: set[str] = {"zip_code"}
+
+# ---------------------------------------------------------------------------
+# Type detection
+# ---------------------------------------------------------------------------
+
+def detect_type(series: pd.Series, force_categorical: bool = False) -> str:
+    """Return 'categorical' or 'numeric' for a pandas Series."""
+    if force_categorical:
+        return "categorical"
+    if pd.api.types.is_bool_dtype(series):
+        return "categorical"
+    if pd.api.types.is_object_dtype(series) or pd.api.types.is_categorical_dtype(series):
+        return "categorical"
+    if pd.api.types.is_numeric_dtype(series):
+        # Low-cardinality numeric → treat as categorical
+        if series.nunique(dropna=True) <= 10:
+            return "categorical"
+        return "numeric"
+    return "categorical"
+
+# ---------------------------------------------------------------------------
+# Statistical tests
+# ---------------------------------------------------------------------------
+
+def _cramers_v(chi2: float, n: int, r: int, k: int) -> float:
+    """Bias-corrected Cramer's V."""
+    if n == 0 or min(r, k) <= 1:
+        return 0.0
+    phi2 = chi2 / n
+    phi2c = max(0.0, phi2 - (r - 1) * (k - 1) / (n - 1))
+    rc = r - (r - 1) ** 2 / (n - 1)
+    kc = k - (k - 1) ** 2 / (n - 1)
+    denom = min(kc - 1, rc - 1)
+    return 0.0 if denom <= 0 else (phi2c / denom) ** 0.5
+
+
+def _kruskal_eta2(h: float, n: int, k: int) -> float:
+    """Eta-squared from Kruskal-Wallis H."""
+    denom = n - k
+    return max(0.0, (h - k + 1) / denom) if denom > 0 else 0.0
+
+
+def test_pair(
+    df: pd.DataFrame,
+    feature_col: str,
+    protected_col: str,
+    feature_type: str,
+    protected_type: str,
+    feature_label: str,
+    protected_label: str,
+) -> dict:
+    """Run the appropriate test for one feature / protected-attribute pair."""
+
+    base = {
+        "feature": feature_label,
+        "protected_attribute": protected_label,
+        "n_observations": None,
+        "test": None,
+        "statistic": None,
+        "p_value": None,
+        "effect_size": None,
+        "effect_size_label": None,
+    }
+
+    pair = pd.DataFrame({"f": df[feature_col], "p": df[protected_col]}).dropna()
+    n = len(pair)
+    base["n_observations"] = n
+
+    if n < 10:
+        return {**base, "test": "skipped", "p_value": float("nan"),
+                "effect_size": float("nan"), "effect_size_label": "n/a"}
+
+    # ---- Categorical × Categorical → Chi-Square + Cramer's V -------------
+    if feature_type == "categorical" and protected_type == "categorical":
+        ct = pd.crosstab(pair["f"], pair["p"])
+        chi2, p, _, _ = stats.chi2_contingency(ct)
+        r, k = ct.shape
+        v = _cramers_v(chi2, n, r, k)
+        return {**base, "test": "Chi-Square", "statistic": round(chi2, 3),
+                "p_value": round(p, 6), "effect_size": round(v, 4),
+                "effect_size_label": "Cramer's V"}
+
+    # ---- Numeric × Categorical → Kruskal-Wallis + Eta-squared ------------
+    if feature_type == "numeric" and protected_type == "categorical":
+        groups = [g["f"].values for _, g in pair.groupby("p") if len(g) >= 2]
+        k = len(groups)
+        if k < 2:
+            return {**base, "test": "Kruskal-Wallis", "p_value": float("nan"),
+                    "effect_size": float("nan"), "effect_size_label": "Eta-squared"}
+        h, p = stats.kruskal(*groups)
+        eta2 = _kruskal_eta2(h, n, k)
+        return {**base, "test": "Kruskal-Wallis", "statistic": round(h, 3),
+                "p_value": round(p, 6), "effect_size": round(eta2, 4),
+                "effect_size_label": "Eta-squared"}
+
+    # ---- Categorical × Numeric → Kruskal-Wallis (swap roles) -------------
+    if feature_type == "categorical" and protected_type == "numeric":
+        groups = [g["p"].values for _, g in pair.groupby("f") if len(g) >= 2]
+        k = len(groups)
+        if k < 2:
+            return {**base, "test": "Kruskal-Wallis", "p_value": float("nan"),
+                    "effect_size": float("nan"), "effect_size_label": "Eta-squared"}
+        h, p = stats.kruskal(*groups)
+        eta2 = _kruskal_eta2(h, n, k)
+        return {**base, "test": "Kruskal-Wallis", "statistic": round(h, 3),
+                "p_value": round(p, 6), "effect_size": round(eta2, 4),
+                "effect_size_label": "Eta-squared"}
+
+    # ---- Numeric × Numeric → Spearman ------------------------------------
+    rho, p = stats.spearmanr(pair["f"], pair["p"])
+    return {**base, "test": "Spearman", "statistic": round(rho, 4),
+            "p_value": round(p, 6), "effect_size": round(abs(rho), 4),
+            "effect_size_label": "|rho|"}
+
+# ---------------------------------------------------------------------------
+# Main pipeline
+# ---------------------------------------------------------------------------
+
+def run(data_path: Path = DATA_PATH, output_path: Path = OUTPUT_PATH) -> pd.DataFrame:
+    log.info("Loading %s", data_path)
+    df = pd.read_csv(data_path, low_memory=False)
+    log.info("Loaded %d rows × %d columns", *df.shape)
+
+    # Force zip_code to string so it's treated categorically
+    for col in FORCE_CATEGORICAL:
+        if col in df.columns:
+            df[col] = df[col].apply(lambda x: str(int(x)) if pd.notna(x) else float("nan"))
+
+    protected_cols = set(PROTECTED_ATTRIBUTES.values())
+
+    # All columns that are not protected, not identifiers/skipped
+    feature_cols = [
+        c for c in df.columns
+        if c not in protected_cols and c not in SKIP_COLUMNS
+    ]
+
+    # Build type map
+    type_map: dict[str, str] = {}
+    for col in list(feature_cols) + list(protected_cols):
+        if col in df.columns:
+            type_map[col] = detect_type(df[col], force_categorical=(col in FORCE_CATEGORICAL))
+
+    log.info("Features to test: %d", len(feature_cols))
+    log.info("Protected attributes: %s", list(PROTECTED_ATTRIBUTES.keys()))
+
+    rows = []
+    for prot_label, prot_col in PROTECTED_ATTRIBUTES.items():
+        if prot_col not in df.columns:
+            log.warning("Protected column '%s' not found — skipping.", prot_col)
+            continue
+        for feat_col in feature_cols:
+            try:
+                row = test_pair(
+                    df,
+                    feature_col=feat_col,
+                    protected_col=prot_col,
+                    feature_type=type_map.get(feat_col, "categorical"),
+                    protected_type=type_map.get(prot_col, "categorical"),
+                    feature_label=feat_col,
+                    protected_label=prot_label,
+                )
+                rows.append(row)
+            except Exception as exc:
+                log.warning("Skipped %s vs %s: %s", feat_col, prot_label, exc)
+
+    results = pd.DataFrame(rows)
+    results = results.sort_values("effect_size", ascending=False).reset_index(drop=True)
+    results.insert(0, "rank", results.index + 1)
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    results.to_csv(output_path, index=False)
+    log.info("Saved → %s", output_path)
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    results = run()
+
+    print("\n=== Top 20 Associations (ranked by effect size) ===\n")
+    print(
+        results.head(20)[
+            ["rank", "feature", "protected_attribute", "test", "effect_size", "p_value"]
+        ].to_string(index=False)
+    )
