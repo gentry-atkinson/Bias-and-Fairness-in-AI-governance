@@ -226,6 +226,13 @@ def run(data_path: Path = DATA_PATH, output_path: Path = OUTPUT_PATH) -> pd.Data
     results.to_csv(output_path, index=False)
     log.info("Saved → %s", output_path)
 
+    # ---- KL Divergence across race groups --------------------------------
+    run_kl_divergence(
+        df,
+        group_column="race",
+        output_path=output_path.parent / "kl_divergence_race.csv",
+    )
+
     # ---- Pandas Spearman correlation matrix ------------------------------
     spearman_df = run_spearman_corr(df, protected_cols=protected_cols)
     spearman_path = output_path.parent / "spearman_corr_protected.csv"
@@ -282,6 +289,96 @@ def run_spearman_corr(
     subset = subset.rename(columns=col_rename)
 
     return subset.sort_values(by=list(subset.columns)[0], key=abs, ascending=False)
+
+
+# ---------------------------------------------------------------------------
+# KL Divergence (checklist item 5)
+# ---------------------------------------------------------------------------
+
+def kl_divergence_for_groups(
+    numeric_series: pd.Series,
+    group_series: pd.Series,
+    group_a: str,
+    group_b: str,
+    n_bins: int = 30,
+) -> float:
+    """Compute KL divergence between two groups' distributions of a numeric feature.
+
+    Uses histogram binning to estimate probability distributions.
+    Returns KL( P_a || P_b ).
+
+    Interpretation:
+        0   = identical distributions
+        larger = more different (more distributional shift between groups)
+
+    Parameters
+    ----------
+    numeric_series : Continuous feature values.
+    group_series   : Categorical group labels (e.g. race).
+    group_a        : Label for the reference group (P).
+    group_b        : Label for the comparison group (Q).
+    n_bins         : Number of histogram bins.
+    """
+    combined = pd.DataFrame({"val": numeric_series, "grp": group_series}).dropna()
+    vals_a = combined.loc[combined["grp"] == group_a, "val"].values
+    vals_b = combined.loc[combined["grp"] == group_b, "val"].values
+
+    if len(vals_a) < 5 or len(vals_b) < 5:
+        return float("nan")
+
+    global_min = min(vals_a.min(), vals_b.min())
+    global_max = max(vals_a.max(), vals_b.max())
+    bins = np.linspace(global_min, global_max, n_bins + 1)
+
+    eps = 1e-10
+    p, _ = np.histogram(vals_a, bins=bins)
+    q, _ = np.histogram(vals_b, bins=bins)
+    p = p.astype(float) + eps
+    q = q.astype(float) + eps
+    p /= p.sum()
+    q /= q.sum()
+
+    return float(stats.entropy(p, q))
+
+
+def run_kl_divergence(
+    df: pd.DataFrame,
+    group_column: str = "race",
+    output_path: Path = Path("outputs/kl_divergence_race.csv"),
+) -> pd.DataFrame:
+    """Compare numeric feature distributions across all pairs of race groups.
+
+    For each numeric feature, computes KL divergence between every combination
+    of group pairs (e.g. Black vs White, Black vs Hispanic, etc.).
+    Results are sorted by KL divergence descending so the largest distributional
+    shifts appear at the top.
+    """
+    numeric_features = [
+        col for col in df.columns
+        if col not in SKIP_COLUMNS
+        and col not in set(PROTECTED_ATTRIBUTES.values())
+        and col != group_column
+        and detect_type(df[col]) == "numeric"
+    ]
+
+    groups = df[group_column].dropna().unique().tolist()
+    rows = []
+    for feat in numeric_features:
+        for i, ga in enumerate(groups):
+            for gb in groups[i + 1:]:
+                kl = kl_divergence_for_groups(df[feat], df[group_column], ga, gb)
+                rows.append({
+                    "feature": feat,
+                    "group_a": ga,
+                    "group_b": gb,
+                    "kl_divergence": round(kl, 4) if not pd.isna(kl) else float("nan"),
+                })
+
+    kl_df = pd.DataFrame(rows).sort_values("kl_divergence", ascending=False).reset_index(drop=True)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    kl_df.to_csv(output_path, index=False)
+    log.info("KL divergence saved → %s", output_path)
+    return kl_df
 
 
 # ---------------------------------------------------------------------------
