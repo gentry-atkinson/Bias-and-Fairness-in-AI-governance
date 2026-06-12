@@ -226,7 +226,62 @@ def run(data_path: Path = DATA_PATH, output_path: Path = OUTPUT_PATH) -> pd.Data
     results.to_csv(output_path, index=False)
     log.info("Saved → %s", output_path)
 
+    # ---- Pandas Spearman correlation matrix ------------------------------
+    spearman_df = run_spearman_corr(df, protected_cols=protected_cols)
+    spearman_path = output_path.parent / "spearman_corr_protected.csv"
+    spearman_df.to_csv(spearman_path)
+    log.info("Spearman matrix saved → %s", spearman_path)
+
     return results
+
+
+# ---------------------------------------------------------------------------
+# Pandas built-in Spearman correlation
+# ---------------------------------------------------------------------------
+
+def run_spearman_corr(
+    df: pd.DataFrame,
+    protected_cols: set[str],
+) -> pd.DataFrame:
+    """Use pandas .corr(method='spearman') to compute a full correlation matrix.
+
+    Why Spearman over Pearson or Kendall:
+    - Pearson requires normally distributed continuous variables.
+      Criminal justice data is skewed and contains many categorical variables.
+    - Kendall is also rank-based and handles ties better, but is O(n²) —
+      too slow for 234k rows.
+    - Spearman is rank-based, handles non-normal and ordinal data, and runs
+      efficiently at scale. It is the correct choice here.
+
+    Categorical columns are label-encoded (integer codes) before computing
+    correlations so that pandas can include them in the matrix.
+
+    Returns the subset of the correlation matrix — columns are protected
+    attributes, rows are all other features.
+    """
+    analysis_cols = [
+        c for c in df.columns
+        if c not in SKIP_COLUMNS
+    ]
+    df_enc = df[analysis_cols].copy()
+
+    # Label-encode every object/categorical column
+    for col in df_enc.columns:
+        if pd.api.types.is_object_dtype(df_enc[col]) or pd.api.types.is_categorical_dtype(df_enc[col]):
+            df_enc[col] = df_enc[col].astype("category").cat.codes.replace(-1, float("nan"))
+
+    log.info("Computing Spearman correlation matrix (%d columns)...", len(df_enc.columns))
+    corr_matrix = df_enc.corr(method="spearman")
+
+    # Extract only the columns for protected attributes that exist
+    prot_present = [c for c in protected_cols if c in corr_matrix.columns]
+    subset = corr_matrix[prot_present].drop(index=prot_present, errors="ignore")
+
+    # Rename protected columns to their display labels
+    col_rename = {v: k for k, v in PROTECTED_ATTRIBUTES.items() if v in subset.columns}
+    subset = subset.rename(columns=col_rename)
+
+    return subset.sort_values(by=list(subset.columns)[0], key=abs, ascending=False)
 
 
 # ---------------------------------------------------------------------------
@@ -242,3 +297,8 @@ if __name__ == "__main__":
             ["rank", "feature", "protected_attribute", "test", "effect_size", "p_value"]
         ].to_string(index=False)
     )
+
+    spearman_path = Path("outputs/proxy_associations.csv").parent / "spearman_corr_protected.csv"
+    if spearman_path.exists():
+        print("\n=== Spearman Correlations with Protected Attributes ===\n")
+        print(pd.read_csv(spearman_path, index_col=0).round(4).to_string())
