@@ -1,0 +1,11 @@
+feature,group_a,group_b,kl_divergence
+bond_amount,I,U,1.6397
+bond_amount,A,I,0.5004
+bond_amount,A,U,0.4772
+bond_amount,B,I,0.2771
+bond_amount,W,I,0.1114
+bond_amount,B,U,0.057
+bond_amount,W,U,0.0366
+bond_amount,B,A,0.0363
+bond_amount,W,A,0.027
+bond_amount,W,B,0.0007

@@ -36,8 +36,9 @@ log = logging.getLogger(__name__)
 # Configuration
 # ---------------------------------------------------------------------------
 
-DATA_PATH = Path("data/interim/travis_county_pretrial_analysis_df.csv")
-OUTPUT_PATH = Path("outputs/proxy_associations.csv")
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DATA_PATH = _PROJECT_ROOT / "data/interim/travis_county_pretrial_analysis_df.csv"
+OUTPUT_PATH = _PROJECT_ROOT / "outputs/proxy_associations.csv"
 
 # Professor-specified protected attributes.
 # Maps display name → column name in the dataframe.
@@ -344,7 +345,7 @@ def kl_divergence_for_groups(
 def run_kl_divergence(
     df: pd.DataFrame,
     group_column: str = "race",
-    output_path: Path = Path("outputs/kl_divergence_race.csv"),
+    output_path: Path = _PROJECT_ROOT / "outputs/kl_divergence_race.csv",
 ) -> pd.DataFrame:
     """Compare numeric feature distributions across all pairs of race groups.
 
