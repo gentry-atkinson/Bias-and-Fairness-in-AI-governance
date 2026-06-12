@@ -1,9 +1,10 @@
 """Fairness metric implementations."""
 
+from typing import Any
 import numpy as np
 
 
-def _validate_two_groups(protected):
+def _validate_two_groups(protected: np.ndarray) -> np.ndarray:
     groups = np.unique(protected)
 
     if len(groups) != 2:
@@ -12,7 +13,10 @@ def _validate_two_groups(protected):
     return groups
 
 
-def group_base_rate(outcome, protected):
+def group_base_rate(
+    outcome: np.ndarray,
+    protected: np.ndarray,
+) -> float:
     """
     Difference in outcome rates between two groups.
 
@@ -35,7 +39,10 @@ def group_base_rate(outcome, protected):
     return abs(rates[0] - rates[1])
 
 
-def detention_release_disparity(released, protected):
+def detention_release_disparity(
+    released: np.ndarray,
+    protected: np.ndarray,
+) -> float:
     """
     Difference in release rates between two groups.
 
@@ -50,7 +57,10 @@ def detention_release_disparity(released, protected):
     return group_base_rate(released, protected)
 
 
-def failure_to_appear_disparity(fta, protected):
+def failure_to_appear_disparity(
+    fta: np.ndarray,
+    protected: np.ndarray,
+) -> float:
     """
     Difference in failure-to-appear rates between groups.
 
@@ -65,7 +75,11 @@ def failure_to_appear_disparity(fta, protected):
     return group_base_rate(fta, protected)
 
 
-def false_positive_rate_difference(y_true, y_pred, protected):
+def false_positive_rate_difference(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    protected: np.ndarray,
+) -> float:
     """
     Difference in false positive rates between groups.
 
@@ -91,7 +105,11 @@ def false_positive_rate_difference(y_true, y_pred, protected):
     return abs(fprs[0] - fprs[1])
 
 
-def false_negative_rate_difference(y_true, y_pred, protected):
+def false_negative_rate_difference(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    protected: np.ndarray,
+) -> float:
     """
     Difference in false negative rates between groups.
 
@@ -117,7 +135,11 @@ def false_negative_rate_difference(y_true, y_pred, protected):
     return abs(fnrs[0] - fnrs[1])
 
 
-def calibration_by_subgroup(scores, outcomes, protected):
+def calibration_by_subgroup(
+    scores: np.ndarray,
+    outcomes: np.ndarray,
+    protected: np.ndarray,
+) -> float:
     """
     Calibration difference between two groups.
 
@@ -148,7 +170,10 @@ def calibration_by_subgroup(scores, outcomes, protected):
     return abs(calibration_errors[0] - calibration_errors[1])
 
 
-def harsher_outcome_disparity(outcome_value, protected):
+def harsher_outcome_disparity(
+    outcome_value: np.ndarray,
+    protected: np.ndarray,
+) -> float:
     """
     Difference in average punishment severity between groups.
 
