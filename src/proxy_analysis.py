@@ -65,8 +65,10 @@ def detect_type(series: pd.Series, force_categorical: bool = False) -> str:
         return "categorical"
     if pd.api.types.is_bool_dtype(series):
         return "categorical"
-    if pd.api.types.is_object_dtype(series) or pd.api.types.is_categorical_dtype(series):
+    
+    if pd.api.types.is_object_dtype(series) or isinstance(series.dtype, pd.CategoricalDtype):
         return "categorical"
+    
     if pd.api.types.is_numeric_dtype(series):
         # Low-cardinality numeric → treat as categorical
         if series.nunique(dropna=True) <= 10:
@@ -275,10 +277,33 @@ def run_spearman_corr(
 
     # Label-encode every object/categorical column
     for col in df_enc.columns:
-        if pd.api.types.is_object_dtype(df_enc[col]) or pd.api.types.is_categorical_dtype(df_enc[col]):
-            df_enc[col] = df_enc[col].astype("category").cat.codes.replace(-1, float("nan"))
+        if not pd.api.types.is_numeric_dtype(df_enc[col]):
+            df_enc[col] = (
+                df_enc[col]
+                .astype("category")
+                .cat.codes
+                .replace(-1, np.nan)
+                )
+            
+    print("\nAfter encoding:")
+    print(df_enc.dtypes)
 
     log.info("Computing Spearman correlation matrix (%d columns)...", len(df_enc.columns))
+
+    # for col in df_enc.columns:
+    #     print(col, df_enc[col].dtype)
+
+    ### Debugging: check for any columns that are still object dtype after encoding###
+    # print("\nColumns still containing strings:")
+    # for col in df_enc.columns:
+    #     if df_enc[col].dtype == "object":
+    #         print(col, df_enc[col].dropna().head())
+
+    print(df_enc.dtypes)
+
+    bad_cols = df_enc.select_dtypes(include=["object"])
+    print(bad_cols.columns.tolist())
+
     corr_matrix = df_enc.corr(method="spearman")
 
     # Extract only the columns for protected attributes that exist
