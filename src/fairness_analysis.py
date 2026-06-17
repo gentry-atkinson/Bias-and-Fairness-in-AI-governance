@@ -2,6 +2,8 @@
 
 Initial fairness analysis of Travis County risk scores.
 
+
+
 Measures:
 1. Average risk score by protected group
 2. Statistical parity
@@ -11,6 +13,7 @@ Measures:
 Outputs:
 - fairness_summary.csv
 - statistical_parity.csv
+- figures/*.png
 """
 
 from pathlib import Path
@@ -46,11 +49,11 @@ FIGURE_DIR.mkdir(exist_ok=True)
 
 RISK_SCORE_COL = "risk_score"
 
-PROTECTED_ATTRIBUTES = [
-    "race",
-    "gender",
-    "age_group",
-]
+PROTECTED_ATTRIBUTES = {
+    "race": "race",
+    "gender": "sex",
+    "age": "age_group",
+}
 
 HIGH_RISK_THRESHOLD = 7
 
@@ -161,4 +164,143 @@ def plot_risk_distribution(df, group_col):
     )
 
     plt.close()
+
+
+# ------------------------------------------------------------------
+# Main Analysis
+# ------------------------------------------------------------------
+
+def run():
+
+    print(f"Loading {DATA_PATH}")
+
+    df = pd.read_csv(DATA_PATH)
+
+    print(
+        f"Loaded {len(df):,} rows × "
+        f"{len(df.columns)} columns"
+    )
+
+    # ------------------------------------------
+    # Create age groups
+    # ------------------------------------------
+
+    df = create_age_groups(df)
+
+    # ------------------------------------------
+    # Create high-risk label
+    # ------------------------------------------
+
+    df["high_risk"] = (
+        df[RISK_SCORE_COL]
+        >= HIGH_RISK_THRESHOLD
+    )
+
+    # ------------------------------------------
+    # Overall score summary
+    # ------------------------------------------
+
+    overall = (
+        df[RISK_SCORE_COL]
+        .describe()
+        .round(3)
+    )
+
+    print("\n=== Overall Risk Score Summary ===")
+    print(overall)
+
+    # ------------------------------------------
+    # Group summaries
+    # ------------------------------------------
+
+    summary_tables = []
+
+    parity_tables = []
+
+    for label, column in PROTECTED_ATTRIBUTES.items():
+        
+        print(
+            f"\n=== {column.upper()} ==="
+        )
+
+        summary = summarize_scores(
+            df,
+            column,
+        )
+
+        parity = statistical_parity(
+            df,
+            column,
+        )
+
+        print("\nRisk Scores")
+        print(summary)
+
+        print("\nStatistical Parity")
+        print(parity)
+
+        summary["protected_attribute"] = column
+
+        parity["protected_attribute"] = column
+
+        summary_tables.append(summary)
+
+        parity_tables.append(parity)
+
+        plot_risk_distribution(
+            df,
+            column,
+        )
+
+    # ------------------------------------------
+    # Save outputs
+    # ------------------------------------------
+
+    fairness_summary = pd.concat(
+        summary_tables,
+        ignore_index=True,
+    )
+
+    statistical_parity_df = pd.concat(
+        parity_tables,
+        ignore_index=True,
+    )
+
+    fairness_summary.to_csv(
+        OUTPUT_DIR /
+        "fairness_summary.csv",
+        index=False,
+    )
+
+    statistical_parity_df.to_csv(
+        OUTPUT_DIR /
+        "statistical_parity.csv",
+        index=False,
+    )
+
+    print(
+        "\nSaved fairness_summary.csv"
+    )
+
+    print(
+        "Saved statistical_parity.csv"
+    )
+
+    print(
+        "Saved risk distribution figures"
+    )
+
+    return (
+        fairness_summary,
+        statistical_parity_df,
+    )
+
+
+# ------------------------------------------------------------------
+# Entry Point
+# ------------------------------------------------------------------
+
+if __name__ == "__main__":
+
+    fairness_summary, parity = run()
 
