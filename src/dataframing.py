@@ -38,8 +38,30 @@ PRETRIAL_DEFENDANT_COLS = [
 ]
 
 PRETRIAL_CHARGE_COLS = [
-    "PA_MAST_NO", "PK_BKG_NO", "BJ_BK_DATE", "PK_BND_GRT", "PK_BND_AMT",
-    "PK_BND_TYP", "PK_BND_STS", "PK_CHARGE", "PK_CHG_LIT", "PK_LVL", "JUDGE",
+    "PA_MAST_NO",
+    "PK_BKG_NO",
+    "BJ_BK_DATE",
+
+    # interview / recommendation fields
+    "INT_OFF",
+    "OFF_REC",
+    "PK_ATY_REC",
+    "PK_ATY_BND",
+    "PK_BND_REC",
+
+    # bond fields
+    "PK_BND_GRT",
+    "PK_BND_AMT",
+    "PK_BND_TYP",
+    "PK_BND_STS",
+
+    # charge fields
+    "PK_CHARGE",
+    "PK_CHG_LIT",
+    "PK_LVL",
+
+    # judge
+    "JUDGE",
 ]
 
 BOOKING_COLS = [
@@ -85,6 +107,17 @@ def build_pretrial_df() -> pd.DataFrame:
         usecols=PRETRIAL_CHARGE_COLS,
         low_memory=False,
     )
+    
+    tcud = pd.read_excel(
+    RAW_DATA_DIR / "PreTrial TCUD-ODAR Events.xlsx",
+    sheet_name="Sheet1",
+    usecols=[
+        "PA_MAST_NO",
+        "PI_SCORE",
+        "PI_EVENT",
+        "PI_EVT_DISP",
+        ],
+    )
 
     defendants_unique = (
         _clean_blank_strings(defendants, PRETRIAL_DEFENDANT_COLS)
@@ -98,8 +131,28 @@ def build_pretrial_df() -> pd.DataFrame:
         .groupby("PA_MAST_NO", as_index=False)
         .first()
     )
+    
+    tcud_unique = (
+    tcud
+    .sort_values("PA_MAST_NO")
+    .groupby("PA_MAST_NO", as_index=False)
+    .first()
+    )
+    
+    
 
-    df = defendants_unique.merge(charges_unique, on="PA_MAST_NO", how="left", suffixes=("_def", "_chg"))
+    df = defendants_unique.merge(
+        charges_unique,
+        on="PA_MAST_NO",
+        how="left",
+        suffixes=("_def", "_chg"),
+    )    
+    
+    df = df.merge(
+        tcud_unique,
+        on="PA_MAST_NO",
+        how="left",
+    )
 
     df["booking_date"] = pd.to_datetime(
         df["BJ_BK_DATE_def"].combine_first(df["BJ_BK_DATE_chg"]), errors="coerce"
@@ -119,10 +172,50 @@ def build_pretrial_df() -> pd.DataFrame:
     df["bond_granted_flag"] = df["PK_BND_GRT"].astype(str).str.upper().map({"Y": 1, "N": 0})
 
     required = [
-        "PA_MAST_NO", "booking_date", "PB_SEX", "PB_RAC", "PC_ETHNIC", "PB_ZIP",
-        "age_at_booking", "age_group", "PA_PTS_RISK_num", "PK_BND_GRT", "bond_granted_flag",
-        "PK_BND_AMT_num", "PK_BND_TYP", "PK_BND_STS", "PK_CHARGE", "PK_LVL", "JUDGE",
-    ]
+    "PA_MAST_NO",
+
+    "booking_date",
+
+    # demographics
+    "PB_SEX",
+    "PB_RAC",
+    "PC_ETHNIC",
+    "PB_CITY",
+    "PB_ST",
+    "PB_ZIP",
+
+    # age
+    "age_at_booking",
+    "age_group",
+
+    # risk
+    "PA_PTS_RISK_num",
+    "PI_SCORE",
+    "PI_EVENT",
+    "PI_EVT_DISP",
+
+    # interview
+    "INT_OFF",
+    "OFF_REC",
+    "PK_ATY_REC",
+    "PK_ATY_BND",
+    "PK_BND_REC",
+
+    # bond
+    "PK_BND_GRT",
+    "bond_granted_flag",
+    "PK_BND_AMT_num",
+    "PK_BND_TYP",
+    "PK_BND_STS",
+
+    # charge
+    "PK_CHARGE",
+    "PK_CHG_LIT",
+    "PK_LVL",
+
+    # judge
+    "JUDGE",
+]
 
     analysis_ready = (
         df[required]
@@ -141,6 +234,23 @@ def build_pretrial_df() -> pd.DataFrame:
             "PK_CHARGE": "charge_code",
             "PK_LVL": "charge_level",
             "JUDGE": "judge",
+            
+            "PB_CITY": "city",
+            "PB_ST": "state",
+
+            "PI_SCORE": "tcud_score",
+            "PI_EVENT": "tcud_event",
+            "PI_EVT_DISP": "tcud_event_disposition",
+
+            "INT_OFF": "interview_officer",
+            "OFF_REC": "officer_recommendation",
+            "PK_ATY_REC": "attorney_recommendation",
+            "PK_ATY_BND": "attorney_bond",
+            "PK_BND_REC": "bond_recommendation",
+
+            "PK_CHG_LIT": "charge_description",
+            
+        
         })
     )
     analysis_ready["booking_date"] = pd.to_datetime(analysis_ready["booking_date"], errors="coerce")

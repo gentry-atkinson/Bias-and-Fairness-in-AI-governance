@@ -24,6 +24,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy import stats
+from pandas import CategoricalDtype
+
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -284,6 +286,7 @@ def run_spearman_corr(
                 .cat.codes
                 .replace(-1, np.nan)
                 )
+
             
     print("\nAfter encoding:")
     print(df_enc.dtypes)
