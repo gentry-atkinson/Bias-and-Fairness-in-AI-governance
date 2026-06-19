@@ -175,6 +175,17 @@ def run():
     print(f"Loading {DATA_PATH}")
 
     df = pd.read_csv(DATA_PATH)
+    
+    fairness_df = df[
+    df["risk_score"].notna()
+    ].copy()
+
+    print(
+        f"Using {len(fairness_df):,} records "
+        f"with observed risk scores"
+    )
+    
+    ###
 
     print(
         f"Loaded {len(df):,} rows × "
@@ -224,14 +235,14 @@ def run():
         )
 
         summary = summarize_scores(
-            df,
+            fairness_df,
             column,
         )
 
         parity = statistical_parity(
-            df,
-            column,
-        )
+        fairness_df,
+        column,
+        )   
 
         print("\nRisk Scores")
         print(summary)
@@ -248,9 +259,9 @@ def run():
         parity_tables.append(parity)
 
         plot_risk_distribution(
-            df,
+            fairness_df,
             column,
-        )
+    )
 
     # ------------------------------------------
     # Save outputs
