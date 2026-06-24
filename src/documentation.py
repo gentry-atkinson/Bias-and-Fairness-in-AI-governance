@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 import pandas as pd
 
-from data_loading import PROJECT_ROOT
+from dataloader import PROJECT_ROOT
 
 OUTPUT_DIR = PROJECT_ROOT / "reports" / "tables"
 

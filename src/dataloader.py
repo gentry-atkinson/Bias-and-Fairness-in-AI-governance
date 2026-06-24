@@ -333,12 +333,16 @@ def build_pretrial_records_df() -> pd.DataFrame:
         ],
     )
 
+    print("Deduplicating defendant records...")
+
     defendants_unique = (
         defendants[defendant_keep]
         .sort_values("PA_MAST_NO")
-        .groupby("PA_MAST_NO", as_index=False)
-        .agg(first_nonnull)
+        .drop_duplicates(subset=["PA_MAST_NO"], keep="first")
+        .copy()
     )
+
+    print(f"Defendant records: {len(defendants_unique):,}")
 
     # -------------------------------------------------------------
     # Charge/interview/recommendation/bond fields
@@ -365,7 +369,6 @@ def build_pretrial_records_df() -> pd.DataFrame:
             "PK_BND_GRT",
             "PK_BND_TYP",
             "PK_BND_STS",
-            "bond_amount",
 
             # charge fields
             "PK_CHARGE",
@@ -377,21 +380,32 @@ def build_pretrial_records_df() -> pd.DataFrame:
         ],
     )
 
-    charge_aggs = {}
-
-    for col in charge_keep:
-        if col == "PA_MAST_NO":
-            continue
-        elif col == "bond_amount":
-            charge_aggs[col] = "max"
-        else:
-            charge_aggs[col] = first_nonnull
+    print("Deduplicating charge/interview records...")
 
     charges_unique = (
         charges[charge_keep]
-        .groupby("PA_MAST_NO", as_index=False)
-        .agg(charge_aggs)
+        .sort_values("PA_MAST_NO")
+        .drop_duplicates(subset=["PA_MAST_NO"], keep="first")
+        .copy()
     )
+
+    # Keep the maximum bond amount separately, because one pretrial record
+    # may have multiple charge rows with different bond amounts.
+    if "bond_amount" in charges.columns:
+        bond_amount_max = (
+            charges
+            .groupby("PA_MAST_NO", as_index=False)["bond_amount"]
+            .max()
+            .rename(columns={"bond_amount": "bond_amount_max"})
+        )
+
+        charges_unique = charges_unique.merge(
+            bond_amount_max,
+            on="PA_MAST_NO",
+            how="left",
+        )
+
+    print(f"Charge/interview records: {len(charges_unique):,}")
 
     charge_counts = (
         charges
@@ -428,22 +442,35 @@ def build_pretrial_records_df() -> pd.DataFrame:
     if "PI_SCORE" in tcud.columns:
         tcud["PI_SCORE"] = safe_numeric(tcud["PI_SCORE"])
 
-    if len(tcud_keep) > 1:
-        tcud_aggs = {}
-
-        for col in tcud_keep:
-            if col == "PA_MAST_NO":
-                continue
-            elif col == "PI_SCORE":
-                tcud_aggs[col] = "max"
-            else:
-                tcud_aggs[col] = first_nonnull
+    if len(tcud_keep) > 1: ###
+        
+        print("Deduplicating TCUD/ODAR records...")
 
         tcud_unique = (
             tcud[tcud_keep]
-            .groupby("PA_MAST_NO", as_index=False)
-            .agg(tcud_aggs)
+            .sort_values("PA_MAST_NO")
+            .drop_duplicates(subset=["PA_MAST_NO"], keep="first")
+            .copy()
         )
+
+        if "PI_SCORE" in tcud.columns:
+            tcud_score_max = (
+                tcud
+                .groupby("PA_MAST_NO", as_index=False)["PI_SCORE"]
+                .max()
+                .rename(columns={"PI_SCORE": "PI_SCORE_MAX"})
+            )
+
+            tcud_unique = tcud_unique.merge(
+                tcud_score_max,
+                on="PA_MAST_NO",
+                how="left",
+            )
+
+        print(f"TCUD/ODAR records: {len(tcud_unique):,}")
+        
+        ###
+
 
         tcud_counts = (
             tcud
@@ -519,6 +546,7 @@ def build_pretrial_records_df() -> pd.DataFrame:
             "PK_BND_GRT": "bond_granted_raw",
             "PK_BND_TYP": "bond_type",
             "PK_BND_STS": "bond_status",
+            "bond_amount_max": "bond_amount",
 
             "PK_CHARGE": "charge_code",
             "PK_CHG_LIT": "charge_description",
@@ -529,6 +557,7 @@ def build_pretrial_records_df() -> pd.DataFrame:
             "PI_SCORE": "tcud_score",
             "PI_EVENT": "tcud_event",
             "PI_EVT_DISP": "tcud_event_disposition",
+            "PI_SCORE_MAX": "tcud_score_max"
         }
     )
 

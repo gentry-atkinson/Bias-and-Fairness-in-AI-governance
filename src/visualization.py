@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from data_loading import PROJECT_ROOT
+from dataloader import PROJECT_ROOT
 
 EDA_TABLE_DIR = PROJECT_ROOT / "reports" / "tables" / "travis_county_basic_eda"
 EDA_FIG_DIR = PROJECT_ROOT / "reports" / "figures" / "travis_county_basic_eda"
