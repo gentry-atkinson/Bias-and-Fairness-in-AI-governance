@@ -1,7 +1,4 @@
-metric,value
-rows,238567
-unique_people,132118
-unique_cases,234283
-unique_bookings,233506
-people_multiple_cases,43858
-people_multiple_bookings,43584
+key,non_missing,unique_values,duplicate_rows
+pretrial_id,234283,234283,0
+person_mni,234283,131343,102940
+defendant_booking_id,234283,233506,777
