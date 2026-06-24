@@ -1,0 +1,18 @@
+dataset_name,filename,file_type,status,exists,description
+pretrial_defendants,PreTrial Defendants.xlsx,excel,used,True,"Defendant demographics, booking date, risk score, MNI, ZIP/city/state"
+pretrial_charge_interview,PreTrial Charge-Interview.csv,csv,used,True,"Interview, recommendation, bond, charge, and judge variables"
+pretrial_tcud_odar,PreTrial TCUD-ODAR Events.xlsx,excel,used,True,TCUD/ODAR score and event variables
+pretrial_disposition_reason,PreTrial Disposition Reason.xlsx,excel,pending,True,Disposition reason file; not yet merged
+pretrial_to_booking,PreTrial to Booking Info.xlsx,excel,pending,True,Bridge between pretrial and booking records
+booking_2010_2012,Booking2010_2012v3.csv,csv,pending,True,Booking records before 2013
+booking_2013_2016,Booking2013_2016v3.csv,csv,pending,True,Booking records after 2013
+case_data,CaseData_v2.csv,csv,pending,True,Court case data; likely needed for outcomes
+person_data,PersonData.xlsx,excel,pending,True,Person-level identifiers and demographics
+events,Events.xlsx,excel,pending,True,Event records; may be needed for pretrial crime or court events
+mental_health_events,Mental Health Flag Events.xlsx,excel,pending,True,Mental health flag event data
+revocation,revocationV2.xlsx,excel,pending,True,Revocation outcome data
+sentencing_pre_2013,SentencingDataPre2013.xlsx,excel,pending,True,Sentencing outcomes before 2013
+sentencing_post_2013,SentencingDataPost2013.xlsx,excel,pending,True,Sentencing outcomes after 2013
+case_booking_charge_bridge,CaseIDtoBookingChargeIDUPDATED.xlsx,excel,pending,True,Bridge between case IDs and booking charge IDs
+charge_code_description,chargecode_description.dta,stata,pending,True,Charge code lookup/description file
+violent_charge_codes,171017_CCHCodes_Violent marked by Slayton.xlsx,excel,pending,True,Charge code violence classification lookup
