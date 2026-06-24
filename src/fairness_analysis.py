@@ -2,8 +2,6 @@
 
 Initial fairness analysis of Travis County risk scores.
 
-
-
 Measures:
 1. Average risk score by protected group
 2. Statistical parity
@@ -14,6 +12,7 @@ Outputs:
 - fairness_summary.csv
 - statistical_parity.csv
 - figures/*.png
+
 """
 
 from pathlib import Path
@@ -33,7 +32,7 @@ DATA_PATH = (
     PROJECT_ROOT
     / "data"
     / "interim"
-    / "travis_county_pretrial_analysis_df.csv"
+    / "travis_county_complete_defendants_df.csv"
 )
 
 OUTPUT_DIR = PROJECT_ROOT / "outputs"
@@ -172,24 +171,26 @@ def plot_risk_distribution(df, group_col):
 
 def run():
 
-    print(f"Loading {DATA_PATH}")
-
     df = pd.read_csv(DATA_PATH)
-    
-    fairness_df = df[
-    df["risk_score"].notna()
-    ].copy()
-
-    print(
-        f"Using {len(fairness_df):,} records "
-        f"with observed risk scores"
-    )
-    
-    ###
 
     print(
         f"Loaded {len(df):,} rows × "
         f"{len(df.columns)} columns"
+    )
+
+    df = create_age_groups(df)
+
+    fairness_df = df[
+        df[RISK_SCORE_COL].notna()
+    ].copy()
+
+    fairness_df["high_risk"] = (
+        fairness_df[RISK_SCORE_COL] >= HIGH_RISK_THRESHOLD
+    )
+
+    print(
+        f"Using {len(fairness_df):,} records "
+        f"with observed risk scores"
     )
 
     # ------------------------------------------
@@ -210,12 +211,12 @@ def run():
     # ------------------------------------------
     # Overall score summary
     # ------------------------------------------
-
+    
     overall = (
-        df[RISK_SCORE_COL]
-        .describe()
-        .round(3)
-    )
+    fairness_df[RISK_SCORE_COL]
+    .describe()
+    .round(3)
+)
 
     print("\n=== Overall Risk Score Summary ===")
     print(overall)
