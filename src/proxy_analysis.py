@@ -34,28 +34,51 @@ from pandas import CategoricalDtype
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 log = logging.getLogger(__name__)
 
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_PATH = _PROJECT_ROOT / "data/interim/travis_county_pretrial_analysis_df.csv"
-OUTPUT_PATH = _PROJECT_ROOT / "outputs/proxy_associations.csv"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+DATA_PATH = (
+    PROJECT_ROOT
+    / "data"
+    / "interim"
+    / "travis_county_pretrial_analysis_df.csv"
+)
+
+OUTPUT_PATH = (
+    PROJECT_ROOT
+    / "outputs"
+    / "proxy_associations.csv"
+)
 
 # Professor-specified protected attributes.
-# Maps display name → column name in the dataframe.
+# Format: display name -> dataframe column name
 PROTECTED_ATTRIBUTES: dict[str, str] = {
-    "race":   "race",
-    "gender": "sex",           # dataset column is 'sex'
-    "age":    "age_at_booking", # dataset column is 'age_at_booking'
+    "race": "race",
+    "gender": "sex",
+    "age": "age_at_booking",
 }
 
-# Columns to skip entirely (identifiers, timestamps)
-SKIP_COLUMNS: set[str] = {"pretrial_id", "booking_date", "age_group"}
+# Columns to skip entirely.
+# These are identifiers, timestamps, duplicate IDs, or derived grouping fields.
+SKIP_COLUMNS: set[str] = {
+    "pretrial_id",
+    "person_mni",
+    "defendant_booking_id",
+    "PK_BKG_NO",
+    "booking_date",
+    "BJ_BK_DATE",
+    "age_group",
+}
 
-# These should be forced to categorical regardless of dtype
-# (zip codes are stored as floats but are not numeric quantities)
-FORCE_CATEGORICAL: set[str] = {"zip_code"}
+# Variables that should always be treated as categorical.
+# ZIP codes are labels, not numeric quantities.
+FORCE_CATEGORICAL: set[str] = {
+    "zip_code",
+}
 
 # ---------------------------------------------------------------------------
 # Type detection
@@ -255,29 +278,24 @@ def run_spearman_corr(
     df: pd.DataFrame,
     protected_cols: set[str],
 ) -> pd.DataFrame:
-    """Use pandas .corr(method='spearman') to compute a full correlation matrix.
-
-    Why Spearman over Pearson or Kendall:
-    - Pearson requires normally distributed continuous variables.
-      Criminal justice data is skewed and contains many categorical variables.
-    - Kendall is also rank-based and handles ties better, but is O(n²) —
-      too slow for 234k rows.
-    - Spearman is rank-based, handles non-normal and ordinal data, and runs
-      efficiently at scale. It is the correct choice here.
-
-    Categorical columns are label-encoded (integer codes) before computing
-    correlations so that pandas can include them in the matrix.
-
-    Returns the subset of the correlation matrix — columns are protected
-    attributes, rows are all other features.
     """
+    Compute a Spearman correlation matrix using pandas.
+
+    Non-numeric columns are label-encoded first so that pandas can
+    include categorical variables in the matrix.
+
+    Note:
+    For label-encoded categorical variables, the sign of the correlation
+    should not be interpreted strongly. The magnitude is more useful.
+    """
+
     analysis_cols = [
-        c for c in df.columns
-        if c not in SKIP_COLUMNS
+        col for col in df.columns
+        if col not in SKIP_COLUMNS
     ]
+
     df_enc = df[analysis_cols].copy()
 
-    # Label-encode every object/categorical column
     for col in df_enc.columns:
         if not pd.api.types.is_numeric_dtype(df_enc[col]):
             df_enc[col] = (
@@ -285,24 +303,43 @@ def run_spearman_corr(
                 .astype("category")
                 .cat.codes
                 .replace(-1, np.nan)
-                )
+            )
 
-        
-
-    log.info("Computing Spearman correlation matrix (%d columns)...", len(df_enc.columns))
-
+    log.info(
+        "Computing Spearman correlation matrix (%d columns)...",
+        len(df_enc.columns),
+    )
 
     corr_matrix = df_enc.corr(method="spearman")
 
-    # Extract only the columns for protected attributes that exist
-    prot_present = [c for c in protected_cols if c in corr_matrix.columns]
-    subset = corr_matrix[prot_present].drop(index=prot_present, errors="ignore")
+    protected_present = [
+        col for col in protected_cols
+        if col in corr_matrix.columns
+    ]
 
-    # Rename protected columns to their display labels
-    col_rename = {v: k for k, v in PROTECTED_ATTRIBUTES.items() if v in subset.columns}
-    subset = subset.rename(columns=col_rename)
+    subset = corr_matrix[protected_present].drop(
+        index=protected_present,
+        errors="ignore",
+    )
 
-    return subset.sort_values(by=list(subset.columns)[0], key=abs, ascending=False)
+    column_rename = {
+        column_name: display_name
+        for display_name, column_name in PROTECTED_ATTRIBUTES.items()
+        if column_name in subset.columns
+    }
+
+    subset = subset.rename(columns=column_rename)
+
+    if subset.empty:
+        return subset
+
+    first_protected_column = list(subset.columns)[0]
+
+    return subset.sort_values(
+        by=first_protected_column,
+        key=abs,
+        ascending=False,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -358,7 +395,7 @@ def kl_divergence_for_groups(
 def run_kl_divergence(
     df: pd.DataFrame,
     group_column: str = "race",
-    output_path: Path = _PROJECT_ROOT / "outputs/kl_divergence_race.csv",
+    output_path: Path = PROJECT_ROOT / "outputs/kl_divergence_race.csv",
 ) -> pd.DataFrame:
     """Compare numeric feature distributions across all pairs of race groups.
 
