@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 import pandas as pd
 
-from data_loading import DATASET_SPECS, load_dataset, PROJECT_ROOT
+from dataloader import DATASET_SPECS, load_dataset, PROJECT_ROOT
 
 OUTPUT_DIR = PROJECT_ROOT / "reports" / "tables" / "travis_county_basic_eda"
 
