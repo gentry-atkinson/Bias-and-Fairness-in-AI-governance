@@ -131,8 +131,8 @@ def run_linkage_analysis() -> dict[str, pd.DataFrame]:
     pretrial_bridge_case_number = unique_excel("PreTrial to Booking Info.xlsx", "Booking", "BH_C_CASE")
 
     tcud_pa = unique_excel("PreTrial TCUD-ODAR Events.xlsx", "Sheet1", "PA_MAST_NO")
-    bridge_case_id = unique_excel("CaseIDtoBookingChargeIDUPDATED.xlsx", "Sheet2", "CaseID")
-    bridge_booking_charge_id = unique_excel("CaseIDtoBookingChargeIDUPDATED.xlsx", "Sheet2", "BookingChargeID")
+    # bridge_case_id = unique_excel("CaseIDtoBookingChargeIDUPDATED.xlsx", "Sheet2", "CaseID")
+    # bridge_booking_charge_id = unique_excel("CaseIDtoBookingChargeIDUPDATED.xlsx", "Sheet2", "BookingChargeID")
     sentencing_case_id = (
         unique_excel("SentencingDataPre2013.xlsx", "SentencingDataPre2013", "CaseID")
         | unique_excel("SentencingDataPost2013.xlsx", "SentencingDataPost2013", "CaseID")
@@ -152,10 +152,10 @@ def run_linkage_analysis() -> dict[str, pd.DataFrame]:
         overlap_row("booking", "pretrial_charge.PK_BKG_NO", pretrial_booking, "booking.BookingNumber", booking_number),
         overlap_row("booking", "pretrial_defendants.PA_BKG_NO", pretrial_def_booking, "booking.BookingNumber", booking_number),
         overlap_row("booking", "pretrial_bridge.BH_BKG_NO", pretrial_bridge_booking, "booking.BookingNumber", booking_number),
-        overlap_row("case", "case_bridge.CaseID", bridge_case_id, "case.CaseID", case_id),
+        # overlap_row("case", "case_bridge.CaseID", bridge_case_id, "case.CaseID", case_id),
         overlap_row("case", "sentencing.CaseID", sentencing_case_id, "case.CaseID", case_id),
         overlap_row("case", "revocation.CaseID", revocation_case_id, "case.CaseID", case_id),
-        overlap_row("charge", "case_bridge.BookingChargeID", bridge_booking_charge_id, "booking.BookingChargeID", booking_charge_id),
+        # overlap_row("charge", "case_bridge.BookingChargeID", bridge_booking_charge_id, "booking.BookingChargeID", booking_charge_id),
         overlap_row("charge", "revocation.CaseChargeID", revocation_case_charge_id, "case.CaseChargeID", case_charge_id),
         overlap_row("charge", "booking.ChargeCode", booking_charge_code, "case.ChargeCode", case_charge_code),
         overlap_row("charge", "pretrial_charge.PK_CHARGE", pretrial_charge_code, "booking.ChargeCode", booking_charge_code),
@@ -181,7 +181,7 @@ def run_linkage_analysis() -> dict[str, pd.DataFrame]:
         {"entity": "booking", "key": "BookingNumber", "mean_rows_per_key": round(float(booking_concat.groupby("BookingNumber").size().mean()), 2)},
         {"entity": "case", "key": "CaseID", "mean_rows_per_key": _mean_rows_per_key_csv("CaseData_v2.csv", "CaseID")},
         {"entity": "pretrial", "key": "PA_MAST_NO", "mean_rows_per_key": _mean_rows_per_key_csv("PreTrial Charge-Interview.csv", "PA_MAST_NO")},
-        {"entity": "case_bridge", "key": "CaseID", "mean_rows_per_key": _mean_rows_per_key_excel("CaseIDtoBookingChargeIDUPDATED.xlsx", "Sheet2", "CaseID")},
+        #{"entity": "case_bridge", "key": "CaseID", "mean_rows_per_key": _mean_rows_per_key_excel("CaseIDtoBookingChargeIDUPDATED.xlsx", "Sheet2", "CaseID")},
     ])
 
     return {"relationship_overlap": relationship_df, "cardinality": cardinality_df}

@@ -287,25 +287,10 @@ def run_spearman_corr(
                 .replace(-1, np.nan)
                 )
 
-            
-    print("\nAfter encoding:")
-    print(df_enc.dtypes)
+        
 
     log.info("Computing Spearman correlation matrix (%d columns)...", len(df_enc.columns))
 
-    # for col in df_enc.columns:
-    #     print(col, df_enc[col].dtype)
-
-    ### Debugging: check for any columns that are still object dtype after encoding###
-    # print("\nColumns still containing strings:")
-    # for col in df_enc.columns:
-    #     if df_enc[col].dtype == "object":
-    #         print(col, df_enc[col].dropna().head())
-
-    print(df_enc.dtypes)
-
-    bad_cols = df_enc.select_dtypes(include=["object"])
-    print(bad_cols.columns.tolist())
 
     corr_matrix = df_enc.corr(method="spearman")
 
