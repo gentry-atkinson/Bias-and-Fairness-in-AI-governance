@@ -1,16 +1,15 @@
-"""Train a linear regression model to predict ORAS risk scores."""
+"""Train a Random Forest regressor to predict ORAS risk scores."""
 
 from pathlib import Path
 
 import pandas as pd
 from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -22,8 +21,7 @@ DATA_PATH = (
 )
 
 
-def main() -> None:
-    """Train and evaluate a linear regression model."""
+def main():
 
     df = pd.read_csv(DATA_PATH, low_memory=False)
 
@@ -49,7 +47,6 @@ def main() -> None:
     X = df[feature_columns].copy()
     y = df["risk_score"]
 
-
     categorical_features = [
         "sex",
         "race",
@@ -72,7 +69,6 @@ def main() -> None:
         "tcud_event_count",
     ]
 
-    # Treat coded numeric fields as categorical
     for col in categorical_features:
         X[col] = X[col].fillna("MISSING").astype(str)
 
@@ -87,14 +83,8 @@ def main() -> None:
                 "cat",
                 Pipeline(
                     steps=[
-                        (
-                            "imputer",
-                            SimpleImputer(strategy="most_frequent"),
-                        ),
-                        (
-                            "encoder",
-                            OneHotEncoder(handle_unknown="ignore"),
-                        ),
+                        ("imputer", SimpleImputer(strategy="most_frequent")),
+                        ("encoder", OneHotEncoder(handle_unknown="ignore")),
                     ]
                 ),
                 categorical_features,
@@ -105,7 +95,15 @@ def main() -> None:
     model = Pipeline(
         steps=[
             ("preprocessor", preprocessor),
-            ("regressor", LinearRegression()),
+            (
+                "regressor",
+                RandomForestRegressor(
+                    n_estimators=300,
+                    max_depth=40,
+                    random_state=42,
+                    n_jobs=-1,
+                ),
+            ),
         ]
     )
 
@@ -120,39 +118,13 @@ def main() -> None:
 
     predictions = model.predict(X_test)
 
-    print("\nLinear Regression Results")
-    print("-------------------------")
+    print("\nRandom Forest Results")
+    print("---------------------")
     print(f"R²: {r2_score(y_test, predictions):.4f}")
     print(f"MAE: {mean_absolute_error(y_test, predictions):.4f}")
 
     rmse = mean_squared_error(y_test, predictions) ** 0.5
     print(f"RMSE: {rmse:.4f}")
-
-    feature_names = model.named_steps[
-        "preprocessor"
-    ].get_feature_names_out()
-
-    coefficients = model.named_steps[
-        "regressor"
-    ].coef_
-
-    importance_df = (
-        pd.DataFrame(
-            {
-                "feature": feature_names,
-                "coefficient": coefficients,
-            }
-        )
-        .assign(abs_coefficient=lambda x: x["coefficient"].abs())
-        .sort_values("abs_coefficient", ascending=False)
-    )
-
-    print("\nTop 20 most influential features:")
-    print(
-        importance_df[
-            ["feature", "coefficient"]
-        ].head(20).to_string(index=False)
-    )
 
 
 if __name__ == "__main__":
