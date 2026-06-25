@@ -56,6 +56,18 @@ PROTECTED_ATTRIBUTES = {
 
 HIGH_RISK_THRESHOLD = 7
 
+# Additional thresholds for sensitivity analysis.
+# This helps us see whether group disparities depend on the cutoff.
+HIGH_RISK_THRESHOLDS = [4, 5, 6, 7]
+
+# Reference groups for disparity comparisons.
+# These are temporary and should be confirmed with the professor.
+REFERENCE_GROUPS = {
+    "race": "W",
+    "sex": "F",
+    "age_group": "18-25",
+}
+
 
 # ------------------------------------------------------------------
 # Helper Functions
@@ -127,6 +139,123 @@ def statistical_parity(df, group_col):
     return parity
 
 
+def threshold_sensitivity(df, group_col):
+    """
+    Compute high-risk rates by group across multiple thresholds.
+
+    This shows whether statistical parity results depend on
+    the chosen high-risk cutoff.
+    """
+
+    rows = []
+
+    for threshold in HIGH_RISK_THRESHOLDS:
+
+        temp = df.copy()
+
+        temp["high_risk_at_threshold"] = (
+            temp[RISK_SCORE_COL] >= threshold
+        )
+
+        rates = (
+            temp.groupby(group_col)["high_risk_at_threshold"]
+            .mean()
+            .reset_index()
+        )
+
+        rates["threshold"] = threshold
+
+        rates.rename(
+            columns={
+                "high_risk_at_threshold": "high_risk_rate"
+            },
+            inplace=True,
+        )
+
+        rows.append(rates)
+
+    result = pd.concat(
+        rows,
+        ignore_index=True,
+    )
+
+    result["high_risk_rate"] = (
+        result["high_risk_rate"]
+        .round(4)
+    )
+
+    return result
+
+
+def build_disparity_table(df, group_col):
+    """
+    Build a group-level disparity table.
+
+    Compares each group to a reference group using:
+    - mean risk score difference
+    - high-risk rate difference
+    - high-risk rate ratio
+    """
+
+    summary = summarize_scores(
+        df,
+        group_col,
+    )
+
+    parity = statistical_parity(
+        df,
+        group_col,
+    )
+
+    table = summary.merge(
+        parity,
+        on=group_col,
+        how="left",
+    )
+
+    reference_group = REFERENCE_GROUPS.get(group_col)
+
+    if reference_group is None:
+        table["reference_group"] = np.nan
+        table["mean_score_difference_from_reference"] = np.nan
+        table["high_risk_rate_difference_from_reference"] = np.nan
+        table["high_risk_rate_ratio_to_reference"] = np.nan
+        return table
+
+    reference_row = table[
+        table[group_col] == reference_group
+    ]
+
+    if reference_row.empty:
+        table["reference_group"] = reference_group
+        table["mean_score_difference_from_reference"] = np.nan
+        table["high_risk_rate_difference_from_reference"] = np.nan
+        table["high_risk_rate_ratio_to_reference"] = np.nan
+        return table
+
+    reference_mean = reference_row["mean"].iloc[0]
+    reference_rate = reference_row["high_risk_rate"].iloc[0]
+
+    table["reference_group"] = reference_group
+
+    table["mean_score_difference_from_reference"] = (
+        table["mean"] - reference_mean
+    ).round(3)
+
+    table["high_risk_rate_difference_from_reference"] = (
+        table["high_risk_rate"] - reference_rate
+    ).round(4)
+
+    if reference_rate == 0:
+        table["high_risk_rate_ratio_to_reference"] = np.nan
+    else:
+        table["high_risk_rate_ratio_to_reference"] = (
+            table["high_risk_rate"] / reference_rate
+        ).round(3)
+
+    return table
+
+
 def plot_risk_distribution(df, group_col):
     """
     Plot risk score distributions.
@@ -178,10 +307,10 @@ def run():
         f"{len(df.columns)} columns"
     )
     
-    ##
+    '''
     print("\n=== Columns in Complete Defendants Dataset ===")
     print(df.columns.tolist())
-    ##
+    '''
 
     df = create_age_groups(df)
 
@@ -217,8 +346,9 @@ def run():
     # ------------------------------------------
 
     summary_tables = []
-
     parity_tables = []
+    threshold_tables = []
+    disparity_tables = []
 
     for label, column in PROTECTED_ATTRIBUTES.items():
         
@@ -234,21 +364,44 @@ def run():
         parity = statistical_parity(
             fairness_df,
             column,
-        )   
+        )  
+        
+        threshold_table = threshold_sensitivity(
+            fairness_df,
+            column,
+        )
+
+        disparity_table = build_disparity_table(
+            fairness_df,
+            column,
+        )
 
         print("\nRisk Scores")
         print(summary)
 
         print("\nStatistical Parity")
         print(parity)
+        
+        print("\nThreshold Sensitivity")
+        print(threshold_table)
+
+        print("\nDisparity Table")
+        print(disparity_table)
 
         summary["protected_attribute"] = column
 
         parity["protected_attribute"] = column
+        
+        threshold_table["protected_attribute"] = column
+        
+        disparity_table["protected_attribute"] = column
 
         summary_tables.append(summary)
 
         parity_tables.append(parity)
+        
+        threshold_tables.append(threshold_table)
+        disparity_tables.append(disparity_table)
 
         plot_risk_distribution(
             fairness_df,
@@ -268,6 +421,16 @@ def run():
         parity_tables,
         ignore_index=True,
     )
+    
+    threshold_sensitivity_df = pd.concat(
+        threshold_tables,
+        ignore_index=True,
+    )
+
+    disparity_df = pd.concat(
+        disparity_tables,
+        ignore_index=True,
+    )
 
     fairness_summary.to_csv(
         OUTPUT_DIR /
@@ -280,22 +443,28 @@ def run():
         "statistical_parity.csv",
         index=False,
     )
-
-    print(
-        "\nSaved fairness_summary.csv"
+    
+    threshold_sensitivity_df.to_csv(
+        OUTPUT_DIR / "threshold_sensitivity.csv",
+        index=False,
     )
 
-    print(
-        "Saved statistical_parity.csv"
+    disparity_df.to_csv(
+        OUTPUT_DIR / "fairness_disparity_table.csv",
+        index=False,
     )
 
-    print(
-        "Saved risk distribution figures"
-    )
+    print("\nSaved fairness_summary.csv")
+    print("Saved statistical_parity.csv")
+    print("Saved threshold_sensitivity.csv")
+    print("Saved fairness_disparity_table.csv")
+    print("Saved risk distribution figures")
 
     return (
         fairness_summary,
         statistical_parity_df,
+        threshold_sensitivity_df,
+        disparity_df,
     )
 
 
@@ -305,5 +474,5 @@ def run():
 
 if __name__ == "__main__":
 
-    fairness_summary, parity = run()
+    fairness_summary, parity, threshold_sensitivity_df, disparity_df = run()
 
