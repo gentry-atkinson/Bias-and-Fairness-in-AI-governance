@@ -177,6 +177,11 @@ def run():
         f"Loaded {len(df):,} rows × "
         f"{len(df.columns)} columns"
     )
+    
+    ##
+    print("\n=== Columns in Complete Defendants Dataset ===")
+    print(df.columns.tolist())
+    ##
 
     df = create_age_groups(df)
 
@@ -193,30 +198,16 @@ def run():
         f"with observed risk scores"
     )
 
-    # ------------------------------------------
-    # Create age groups
-    # ------------------------------------------
-
-    df = create_age_groups(df)
-
-    # ------------------------------------------
-    # Create high-risk label
-    # ------------------------------------------
-
-    df["high_risk"] = (
-        df[RISK_SCORE_COL]
-        >= HIGH_RISK_THRESHOLD
-    )
 
     # ------------------------------------------
     # Overall score summary
     # ------------------------------------------
     
     overall = (
-    fairness_df[RISK_SCORE_COL]
-    .describe()
-    .round(3)
-)
+        fairness_df[RISK_SCORE_COL]
+        .describe()
+        .round(3)
+    )
 
     print("\n=== Overall Risk Score Summary ===")
     print(overall)
@@ -241,8 +232,8 @@ def run():
         )
 
         parity = statistical_parity(
-        fairness_df,
-        column,
+            fairness_df,
+            column,
         )   
 
         print("\nRisk Scores")
@@ -262,7 +253,7 @@ def run():
         plot_risk_distribution(
             fairness_df,
             column,
-    )
+        )
 
     # ------------------------------------------
     # Save outputs
