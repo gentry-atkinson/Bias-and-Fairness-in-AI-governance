@@ -255,43 +255,217 @@ def build_disparity_table(df, group_col):
 
     return table
 
+#plots
 
-def plot_risk_distribution(df, group_col):
+def get_group_order(group_col):
     """
-    Plot risk score distributions.
+    Define a clean display order for groups.
     """
+    orders = {
+        "race": ["A", "B", "I", "U", "W"],
+        "sex": ["F", "M"],
+        "age_group": ["18-25", "26-35", "36-50", "50+"],
+    }
+    return orders.get(group_col, None)
 
-    plt.figure(figsize=(10, 6))
+def add_bar_labels(ax, bars, decimals=3):
+    """
+    Add numeric labels above bars.
+    """
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            height,
+            f"{height:.{decimals}f}",
+            ha="center",
+            va="bottom",
+            fontsize=9,
+        )
+        
+def plot_mean_risk_scores(summary_df, group_col):
+    """
+    Bar chart of mean risk score by group.
+    """
+    plot_df = summary_df.copy()
 
-    for group in sorted(df[group_col].dropna().unique()):
+    order = get_group_order(group_col)
+    if order is not None:
+        plot_df[group_col] = pd.Categorical(
+            plot_df[group_col],
+            categories=order,
+            ordered=True,
+        )
+        plot_df = plot_df.sort_values(group_col)
 
-        subset = df[
-            df[group_col] == group
-        ]
+    fig, ax = plt.subplots(figsize=(8, 5))
 
-        plt.hist(
-            subset[RISK_SCORE_COL],
-            bins=10,
-            alpha=0.5,
-            density=True,
+    bars = ax.bar(
+        plot_df[group_col].astype(str),
+        plot_df["mean"],
+    )
+
+    ax.set_title(f"Average Risk Score by {group_col}")
+    ax.set_xlabel(group_col.replace("_", " ").title())
+    ax.set_ylabel("Mean Risk Score")
+    ax.set_ylim(0, max(plot_df["mean"]) * 1.15)
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.grid(axis="y", alpha=0.25)
+    ax.set_axisbelow(True)
+
+    add_bar_labels(ax, bars, decimals=3)
+
+    plt.tight_layout()
+    plt.savefig(FIGURE_DIR / f"mean_risk_score_{group_col}.png", dpi=300)
+    plt.close()
+    
+    
+def plot_high_risk_rate(parity_df, group_col):
+    """
+    Bar chart of high-risk rate by group.
+    """
+    plot_df = parity_df.copy()
+
+    order = get_group_order(group_col)
+    if order is not None:
+        plot_df[group_col] = pd.Categorical(
+            plot_df[group_col],
+            categories=order,
+            ordered=True,
+        )
+        plot_df = plot_df.sort_values(group_col)
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    bars = ax.bar(
+        plot_df[group_col].astype(str),
+        plot_df["high_risk_rate"],
+    )
+
+    ax.set_title(f"High-Risk Rate by {group_col} (threshold = {HIGH_RISK_THRESHOLD})")
+    ax.set_xlabel(group_col.replace("_", " ").title())
+    ax.set_ylabel("High-Risk Rate")
+    ax.set_ylim(0, max(plot_df["high_risk_rate"]) * 1.20 + 0.01)
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.grid(axis="y", alpha=0.25)
+    ax.set_axisbelow(True)
+
+    add_bar_labels(ax, bars, decimals=4)
+
+    plt.tight_layout()
+    plt.savefig(FIGURE_DIR / f"high_risk_rate_{group_col}.png", dpi=300)
+    plt.close()
+    
+def plot_threshold_sensitivity(threshold_df, group_col):
+    """
+    Line chart showing how high-risk rates change across thresholds.
+    """
+    plot_df = threshold_df.copy()
+
+    order = get_group_order(group_col)
+    groups = order if order is not None else sorted(plot_df[group_col].dropna().unique())
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    for group in groups:
+        subset = plot_df[plot_df[group_col] == group].sort_values("threshold")
+        ax.plot(
+            subset["threshold"],
+            subset["high_risk_rate"],
+            marker="o",
             label=str(group),
         )
 
-    plt.xlabel("Risk Score")
-    plt.ylabel("Density")
-    plt.title(
-        f"Risk Score Distribution by {group_col}"
-    )
-    plt.legend()
+    ax.set_title(f"Threshold Sensitivity by {group_col}")
+    ax.set_xlabel("High-Risk Threshold")
+    ax.set_ylabel("High-Risk Rate")
+    ax.set_xticks(HIGH_RISK_THRESHOLDS)
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.grid(alpha=0.25)
+    ax.set_axisbelow(True)
+    ax.legend(title=group_col, frameon=False)
 
     plt.tight_layout()
+    plt.savefig(FIGURE_DIR / f"threshold_sensitivity_{group_col}.png", dpi=300)
+    plt.close()
 
-    plt.savefig(
-        FIGURE_DIR /
-        f"risk_distribution_{group_col}.png"
+def plot_risk_boxplot(df, group_col):
+    """
+    Boxplot of risk score distributions by group.
+    """
+    order = get_group_order(group_col)
+    if order is None:
+        order = sorted(df[group_col].dropna().unique())
+
+    data = [
+        df.loc[df[group_col] == group, RISK_SCORE_COL].dropna()
+        for group in order
+    ]
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    ax.boxplot(
+        data,
+        labels=[str(group) for group in order],
+        patch_artist=False,
     )
 
+    ax.set_title(f"Risk Score Distribution by {group_col}")
+    ax.set_xlabel(group_col.replace("_", " ").title())
+    ax.set_ylabel("Risk Score")
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.grid(axis="y", alpha=0.25)
+    ax.set_axisbelow(True)
+
+    plt.tight_layout()
+    plt.savefig(FIGURE_DIR / f"risk_boxplot_{group_col}.png", dpi=300)
     plt.close()
+
+
+# def plot_risk_distribution(df, group_col):
+#     """
+#     Plot risk score distributions.
+#     """
+
+#     plt.figure(figsize=(10, 6))
+
+#     for group in sorted(df[group_col].dropna().unique()):
+
+#         subset = df[
+#             df[group_col] == group
+#         ]
+
+#         plt.hist(
+#             subset[RISK_SCORE_COL],
+#             bins=10,
+#             alpha=0.5,
+#             density=True,
+#             label=str(group),
+#         )
+
+#     plt.xlabel("Risk Score")
+#     plt.ylabel("Density")
+#     plt.title(
+#         f"Risk Score Distribution by {group_col}"
+#     )
+#     plt.legend()
+
+#     plt.tight_layout()
+
+#     plt.savefig(
+#         FIGURE_DIR /
+#         f"risk_distribution_{group_col}.png"
+#     )
+
+#     plt.close()
 
 
 # ------------------------------------------------------------------
@@ -397,16 +571,17 @@ def run():
         disparity_table["protected_attribute"] = column
 
         summary_tables.append(summary)
-
         parity_tables.append(parity)
-        
         threshold_tables.append(threshold_table)
         disparity_tables.append(disparity_table)
 
-        plot_risk_distribution(
-            fairness_df,
-            column,
-        )
+        plot_mean_risk_scores(summary, column)
+
+        plot_high_risk_rate(parity, column)
+
+        plot_threshold_sensitivity(threshold_table, column)
+
+        plot_risk_boxplot(fairness_df, column)
 
     # ------------------------------------------
     # Save outputs
@@ -458,7 +633,7 @@ def run():
     print("Saved statistical_parity.csv")
     print("Saved threshold_sensitivity.csv")
     print("Saved fairness_disparity_table.csv")
-    print("Saved risk distribution figures")
+    print("Saved figures figures")
 
     return (
         fairness_summary,
