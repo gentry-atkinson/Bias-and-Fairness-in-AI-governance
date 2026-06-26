@@ -1,67 +1,79 @@
 rank,feature,protected_attribute,n_observations,test,statistic,p_value,effect_size,effect_size_label
-1,ethnicity,race,234175,Chi-Square,39409.94,0.0,0.2901,Cramer's V
-2,charge_code,gender,234049,Chi-Square,17587.893,0.0,0.2667,Cramer's V
-3,charge_description,gender,234049,Chi-Square,17138.599,0.0,0.2633,Cramer's V
-4,zip_code,race,199115,Chi-Square,47939.361,0.0,0.2052,Cramer's V
-5,charge_code,race,234049,Chi-Square,27538.785,0.0,0.1594,Cramer's V
-6,bond_status,gender,81037,Chi-Square,2073.429,0.0,0.1584,Cramer's V
-7,bond_recommendation,gender,185633,Chi-Square,4551.67,0.0,0.1566,Cramer's V
-8,charge_description,race,234049,Chi-Square,25836.942,0.0,0.154,Cramer's V
-9,bond_granted_flag,gender,194061,Chi-Square,3873.576,0.0,0.1413,Cramer's V
-10,bond_granted_raw,gender,194061,Chi-Square,3873.576,0.0,0.1413,Cramer's V
-11,charge_code,age,234048,Kruskal-Wallis,26585.136,0.0,0.1108,Eta-squared
-12,charge_description,age,234048,Kruskal-Wallis,25130.843,0.0,0.1046,Eta-squared
-13,charge_level,gender,234049,Chi-Square,2240.901,0.0,0.0972,Cramer's V
-14,risk_score,race,86849,Chi-Square,3106.268,0.0,0.094,Cramer's V
-15,interview_officer,gender,232530,Chi-Square,1921.973,0.0,0.0889,Cramer's V
-16,bond_granted_raw,race,194061,Chi-Square,1427.531,0.0,0.0856,Cramer's V
-17,bond_granted_flag,race,194061,Chi-Square,1427.531,0.0,0.0856,Cramer's V
-18,city,race,232514,Chi-Square,19116.864,0.0,0.0799,Cramer's V
-19,bond_recommendation,race,185633,Chi-Square,2323.251,0.0,0.079,Cramer's V
-20,officer_recommendation,gender,184571,Chi-Square,1175.367,0.0,0.0768,Cramer's V
-21,judge,gender,120418,Chi-Square,585.088,0.0,0.0645,Cramer's V
-22,officer_recommendation,race,184571,Chi-Square,3282.544,0.0,0.063,Cramer's V
-23,bond_status,race,81037,Chi-Square,1349.494,0.0,0.0605,Cramer's V
-24,ethnicity,gender,234175,Chi-Square,822.485,0.0,0.0592,Cramer's V
-25,risk_score,age,86849,Kruskal-Wallis,5034.609,0.0,0.0579,Eta-squared
-26,risk_score,gender,86849,Chi-Square,252.898,0.0,0.053,Cramer's V
-27,charge_level,race,234049,Chi-Square,2681.946,0.0,0.0524,Cramer's V
-28,zip_code,gender,199115,Chi-Square,4134.27,0.0,0.0519,Cramer's V
-29,judge,race,120418,Chi-Square,1601.515,0.0,0.0513,Cramer's V
-30,bond_type,gender,90419,Chi-Square,230.615,0.0,0.0487,Cramer's V
-31,interview_officer,race,232530,Chi-Square,2303.722,0.0,0.0459,Cramer's V
-32,bond_amount,age,234048,Spearman,0.041,0.0,0.041,|rho|
-33,tcud_event_disposition,gender,64710,Chi-Square,58.445,0.0,0.0298,Cramer's V
-34,state,race,232541,Chi-Square,944.491,0.0,0.0239,Cramer's V
-35,zip_code,age,199114,Kruskal-Wallis,5804.179,0.0,0.0216,Eta-squared
-36,city,gender,232514,Chi-Square,3400.343,0.098129,0.0213,Cramer's V
-37,bond_recommendation,age,185633,Kruskal-Wallis,3963.649,0.0,0.0213,Eta-squared
-38,bond_granted_flag,age,194061,Kruskal-Wallis,3914.707,0.0,0.0202,Eta-squared
-39,bond_granted_raw,age,194061,Kruskal-Wallis,3914.707,0.0,0.0202,Eta-squared
-40,tcud_event_disposition,race,64710,Chi-Square,23.811,8.7e-05,0.0175,Cramer's V
-41,tcud_event,gender,71122,Chi-Square,18.524,1.7e-05,0.0157,Cramer's V
-42,bond_status,age,81036,Kruskal-Wallis,1116.448,0.0,0.0133,Eta-squared
-43,attorney_bond,age,53627,Spearman,-0.0129,0.00273,0.0129,|rho|
-44,bond_type,race,90419,Chi-Square,122.751,1.4e-05,0.0127,Cramer's V
-45,ethnicity,age,234174,Kruskal-Wallis,2970.515,0.0,0.0127,Eta-squared
-46,charge_level,age,234048,Kruskal-Wallis,1951.442,0.0,0.0082,Eta-squared
-47,attorney_recommendation,age,7219,Spearman,-0.0069,0.556809,0.0069,|rho|
-48,tcud_score,age,63089,Spearman,-0.0063,0.115154,0.0063,|rho|
-49,tcud_event,race,71122,Chi-Square,6.127,0.189863,0.0055,Cramer's V
-50,city,age,232513,Kruskal-Wallis,2120.404,0.0,0.004,Eta-squared
-51,judge,age,120418,Kruskal-Wallis,527.161,0.0,0.0038,Eta-squared
-52,officer_recommendation,age,184571,Kruskal-Wallis,753.406,0.0,0.0036,Eta-squared
-53,interview_officer,age,232529,Kruskal-Wallis,633.651,0.0,0.0024,Eta-squared
-54,bond_type,age,90418,Kruskal-Wallis,185.365,0.0,0.0019,Eta-squared
-55,attorney_recommendation,race,7219,Kruskal-Wallis,16.361,0.000956,0.0019,Eta-squared
-56,tcud_event_disposition,age,64710,Kruskal-Wallis,111.018,0.0,0.0017,Eta-squared
-57,tcud_score,gender,63089,Kruskal-Wallis,85.369,0.0,0.0013,Eta-squared
-58,attorney_bond,race,53627,Kruskal-Wallis,72.599,0.0,0.0013,Eta-squared
-59,bond_amount,gender,234049,Kruskal-Wallis,285.439,0.0,0.0012,Eta-squared
-60,tcud_event,age,71122,Kruskal-Wallis,59.374,0.0,0.0008,Eta-squared
-61,tcud_score,race,63089,Kruskal-Wallis,46.105,0.0,0.0007,Eta-squared
-62,bond_amount,race,234049,Kruskal-Wallis,16.898,0.002023,0.0001,Eta-squared
-63,attorney_recommendation,gender,7219,Kruskal-Wallis,1.893,0.168849,0.0001,Eta-squared
-64,state,age,232540,Kruskal-Wallis,104.366,0.011552,0.0001,Eta-squared
-65,attorney_bond,gender,53627,Kruskal-Wallis,1.922,0.165681,0.0,Eta-squared
-66,state,gender,232541,Chi-Square,91.494,0.784277,0.0,Cramer's V
+1,ethnicity,race,232689,Chi-Square,39213.298,0.0,0.2902,Cramer's V
+2,charge_code,gender,232563,Chi-Square,17480.164,0.0,0.2667,Cramer's V
+3,charge_description,gender,232563,Chi-Square,17036.095,0.0,0.2634,Cramer's V
+4,zip_code,race,197672,Chi-Square,43188.774,0.0,0.1913,Cramer's V
+5,bond_status,gender,63971,Chi-Square,1478.929,0.0,0.15,Cramer's V
+6,bond_recommendation,gender,159315,Chi-Square,3520.653,0.0,0.1486,Cramer's V
+7,charge_code,race,232563,Chi-Square,22638.858,0.0,0.1425,Cramer's V
+8,charge_description,race,232563,Chi-Square,20960.681,0.0,0.1365,Cramer's V
+9,bond_granted_raw,gender,166967,Chi-Square,2967.574,0.0,0.1333,Cramer's V
+10,bond_granted_flag,gender,232741,Chi-Square,3515.266,0.0,0.1229,Cramer's V
+11,charge_code,age,232612,Kruskal-Wallis,26387.623,0.0,0.1106,Eta-squared
+12,charge_description,age,232612,Kruskal-Wallis,24958.542,0.0,0.1045,Eta-squared
+13,charge_level,gender,232563,Chi-Square,2232.206,0.0,0.0973,Cramer's V
+14,risk_score,race,85459,Chi-Square,3074.995,0.0,0.0943,Cramer's V
+15,bond_granted_raw,race,166967,Chi-Square,1454.47,0.0,0.0932,Cramer's V
+16,bond_granted_flag,race,232741,Chi-Square,1891.527,0.0,0.0901,Cramer's V
+17,interview_officer,gender,224969,Chi-Square,1886.872,0.0,0.0895,Cramer's V
+18,bond_recommendation,race,159315,Chi-Square,2420.12,0.0,0.087,Cramer's V
+19,city,race,231028,Chi-Square,18472.282,0.0,0.0775,Cramer's V
+20,officer_recommendation,gender,158687,Chi-Square,968.223,0.0,0.0745,Cramer's V
+21,officer_recommendation,race,158687,Chi-Square,2910.314,0.0,0.0635,Cramer's V
+22,judge,gender,106747,Chi-Square,486.643,0.0,0.0614,Cramer's V
+23,bond_status,race,63971,Chi-Square,1061.932,0.0,0.0594,Cramer's V
+24,ethnicity,gender,232689,Chi-Square,814.517,0.0,0.0591,Cramer's V
+25,risk_score,age,85465,Kruskal-Wallis,4940.534,0.0,0.0577,Eta-squared
+26,judge,race,106747,Chi-Square,1611.305,0.0,0.0547,Cramer's V
+27,zip_code,gender,197672,Chi-Square,4116.334,0.0,0.0527,Cramer's V
+28,charge_level,race,232563,Chi-Square,2678.496,0.0,0.0525,Cramer's V
+29,risk_score,gender,85459,Chi-Square,242.663,0.0,0.0523,Cramer's V
+30,bond_amount,age,232612,Spearman,0.0494,0.0,0.0494,|rho|
+31,bond_type,gender,75727,Chi-Square,171.562,0.0,0.0453,Cramer's V
+32,interview_officer,race,224969,Chi-Square,2174.335,0.0,0.0452,Cramer's V
+33,tcud_event_disposition,gender,63139,Chi-Square,57.664,0.0,0.03,Cramer's V
+34,pretrial_charge_rows,age,232612,Spearman,-0.0257,0.0,0.0257,|rho|
+35,unique_pretrial_charges,age,232612,Spearman,-0.0244,0.0,0.0244,|rho|
+36,state,race,231056,Chi-Square,937.876,0.0,0.0239,Cramer's V
+37,city,gender,231028,Chi-Square,3353.25,0.065486,0.023,Cramer's V
+38,zip_code,age,197672,Kruskal-Wallis,5787.129,0.0,0.0217,Eta-squared
+39,bond_recommendation,age,159359,Kruskal-Wallis,3408.21,0.0,0.0214,Eta-squared
+40,bond_granted_raw,age,167012,Kruskal-Wallis,3231.647,0.0,0.0193,Eta-squared
+41,tcud_event_count,gender,69762,Chi-Square,27.67,4e-06,0.0188,Cramer's V
+42,tcud_event_disposition,race,63139,Chi-Square,22.082,0.000193,0.0169,Cramer's V
+43,tcud_event,gender,69762,Chi-Square,17.416,3e-05,0.0153,Cramer's V
+44,bond_status,age,63976,Kruskal-Wallis,886.128,0.0,0.0133,Eta-squared
+45,ethnicity,age,232738,Kruskal-Wallis,2958.908,0.0,0.0127,Eta-squared
+46,attorney_bond,age,46232,Spearman,-0.0124,0.007611,0.0124,|rho|
+47,bond_type,race,75727,Chi-Square,94.46,0.007939,0.01,Cramer's V
+48,tcud_score_max,age,61790,Spearman,0.0094,0.018881,0.0094,|rho|
+49,bond_granted_flag,age,232790,Kruskal-Wallis,2131.578,0.0,0.0092,Eta-squared
+50,bond_amount,gender,232563,Kruskal-Wallis,1979.555,0.0,0.0085,Eta-squared
+51,charge_level,age,232612,Kruskal-Wallis,1927.765,0.0,0.0082,Eta-squared
+52,tcud_score,age,61117,Spearman,-0.0077,0.056381,0.0077,|rho|
+53,unique_pretrial_charges,gender,232563,Kruskal-Wallis,1718.202,0.0,0.0074,Eta-squared
+54,attorney_recommendation,age,6165,Spearman,-0.0072,0.570226,0.0072,|rho|
+55,pretrial_charge_rows,gender,232563,Kruskal-Wallis,1685.402,0.0,0.0072,Eta-squared
+56,tcud_event,race,69762,Chi-Square,6.873,0.142762,0.0064,Cramer's V
+57,tcud_event_count,race,69762,Chi-Square,17.42,0.134475,0.0051,Cramer's V
+58,judge,age,106780,Kruskal-Wallis,521.897,0.0,0.0043,Eta-squared
+59,pretrial_charge_rows,race,232563,Kruskal-Wallis,1002.677,0.0,0.0043,Eta-squared
+60,city,age,231029,Kruskal-Wallis,2109.279,0.0,0.004,Eta-squared
+61,unique_pretrial_charges,race,232563,Kruskal-Wallis,894.209,0.0,0.0038,Eta-squared
+62,officer_recommendation,age,158731,Kruskal-Wallis,640.048,0.0,0.0035,Eta-squared
+63,interview_officer,age,225017,Kruskal-Wallis,610.367,0.0,0.0024,Eta-squared
+64,bond_type,age,75735,Kruskal-Wallis,145.159,0.0,0.0018,Eta-squared
+65,tcud_event_disposition,age,63140,Kruskal-Wallis,108.177,0.0,0.0017,Eta-squared
+66,attorney_recommendation,race,6162,Kruskal-Wallis,12.865,0.004938,0.0016,Eta-squared
+67,tcud_score,gender,61116,Kruskal-Wallis,82.346,0.0,0.0013,Eta-squared
+68,attorney_bond,race,46215,Kruskal-Wallis,57.22,0.0,0.0012,Eta-squared
+69,tcud_score_max,race,61789,Kruskal-Wallis,76.306,0.0,0.0012,Eta-squared
+70,bond_amount,race,232563,Kruskal-Wallis,285.652,0.0,0.0012,Eta-squared
+71,tcud_score_max,gender,61789,Kruskal-Wallis,73.656,0.0,0.0012,Eta-squared
+72,tcud_event_count,age,69764,Kruskal-Wallis,75.281,0.0,0.0011,Eta-squared
+73,tcud_event,age,69764,Kruskal-Wallis,55.574,0.0,0.0008,Eta-squared
+74,tcud_score,race,61116,Kruskal-Wallis,46.733,0.0,0.0007,Eta-squared
+75,state,age,231057,Kruskal-Wallis,101.957,0.017314,0.0001,Eta-squared
+76,attorney_recommendation,gender,6162,Kruskal-Wallis,1.297,0.254847,0.0,Eta-squared
+77,state,gender,231056,Chi-Square,91.023,0.794541,0.0,Cramer's V
+78,attorney_bond,gender,46215,Kruskal-Wallis,0.971,0.324455,0.0,Eta-squared
