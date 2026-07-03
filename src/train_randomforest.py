@@ -25,6 +25,23 @@ def main():
 
     df = pd.read_csv(DATA_PATH, low_memory=False)
 
+    prior = pd.read_csv(
+    PROJECT_ROOT / "data/interim/prior_booking_counts_by_defendant.csv"
+)
+
+    df = df.merge(
+        prior,
+        on="person_mni",
+        how="left",
+    )
+
+    df["prior_booking_count"] = df["prior_booking_count"].fillna(0)
+    df["three_or_more_prior_bookings"] = (
+        df["three_or_more_prior_bookings"]
+        .fillna(False)
+        .astype(bool)
+    )
+
     feature_columns = [
         "sex",
         "race",
@@ -42,6 +59,8 @@ def main():
         "tcud_event_disposition",
         "tcud_score_max",
         "tcud_event_count",
+        "prior_booking_count",
+        "three_or_more_prior_bookings",
     ]
 
     X = df[feature_columns].copy()
@@ -67,6 +86,8 @@ def main():
         "tcud_score",
         "tcud_score_max",
         "tcud_event_count",
+        "prior_booking_count",
+        "three_or_more_prior_bookings",
     ]
 
     for col in categorical_features:
@@ -98,8 +119,8 @@ def main():
             (
                 "regressor",
                 RandomForestRegressor(
-                    n_estimators=300,
-                    max_depth=40,
+                    n_estimators=100,
+                    max_depth=20,
                     random_state=42,
                     n_jobs=-1,
                 ),
