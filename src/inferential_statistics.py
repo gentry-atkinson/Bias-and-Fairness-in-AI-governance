@@ -256,3 +256,35 @@ def run():
         "P-value":p,
         "Effect Size":np.nan,
     })
+
+    for outcome in OUTCOME_COLUMNS:
+
+        for group in [
+            "race",
+            "sex",
+            "age_group",
+        ]:
+
+            chi2, p, dof, effect = chi_square_test(
+                df,
+                outcome,
+                group,
+            )
+
+            results.append({
+
+                "Outcome": outcome,
+
+                "Protected Attribute": group,
+
+                "Test":"Chi-square",
+
+                "Statistic":chi2,
+
+                "P-value":p,
+
+                "Degrees Freedom":dof,
+
+                "Effect Size":effect,
+
+            })
