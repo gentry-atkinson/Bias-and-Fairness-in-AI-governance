@@ -71,3 +71,19 @@ OUTCOME_COLUMNS = [
     "has_verdict",
 ]
 
+def create_age_groups(df):
+
+    if "age_group" not in df.columns:
+
+        df["age_group"] = pd.cut(
+            df["age_at_booking"],
+            bins=[0,25,35,50,120],
+            labels=[
+                "18-25",
+                "26-35",
+                "36-50",
+                "50+",
+            ],
+        )
+
+    return df
