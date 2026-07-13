@@ -87,3 +87,20 @@ def create_age_groups(df):
         )
 
     return df
+
+def cramers_v(table):
+
+    chi2, _, _, _ = chi2_contingency(table)
+
+    n = table.sum().sum()
+
+    r, c = table.shape
+
+    return np.sqrt(
+        chi2 /
+        (
+            n *
+            (min(r - 1, c - 1))
+        )
+    )
+    
