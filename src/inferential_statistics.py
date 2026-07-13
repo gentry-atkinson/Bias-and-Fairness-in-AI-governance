@@ -104,3 +104,27 @@ def cramers_v(table):
         )
     )
     
+    
+def kruskal_test(
+    df,
+    outcome,
+    group,
+):
+
+    subset = df[
+        [outcome, group]
+    ].dropna()
+
+    groups = [
+
+        values[outcome].values
+
+        for _, values
+
+        in subset.groupby(group)
+
+    ]
+
+    stat, p = kruskal(*groups)
+
+    return stat, p
