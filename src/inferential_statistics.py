@@ -191,3 +191,68 @@ def mann_whitney_test(
     )
 
     return stat, p
+
+
+def run():
+
+    print(
+        f"Loading {DATA_PATH}"
+    )
+
+    df = pd.read_csv(
+        DATA_PATH,
+        low_memory=False,
+    )
+
+    df = create_age_groups(df)
+
+    results = []
+
+    # ------------------------------
+    # Risk score tests
+    # ------------------------------
+
+    stat, p = kruskal_test(
+        df,
+        RISK_SCORE,
+        "race",
+    )
+
+    results.append({
+        "Outcome":"risk_score",
+        "Protected Attribute":"race",
+        "Test":"Kruskal-Wallis",
+        "Statistic":stat,
+        "P-value":p,
+        "Effect Size":np.nan,
+    })
+
+    stat, p = kruskal_test(
+        df,
+        RISK_SCORE,
+        "age_group",
+    )
+
+    results.append({
+        "Outcome":"risk_score",
+        "Protected Attribute":"age_group",
+        "Test":"Kruskal-Wallis",
+        "Statistic":stat,
+        "P-value":p,
+        "Effect Size":np.nan,
+    })
+
+    stat, p = mann_whitney_test(
+        df,
+        RISK_SCORE,
+        "sex",
+    )
+
+    results.append({
+        "Outcome":"risk_score",
+        "Protected Attribute":"sex",
+        "Test":"Mann-Whitney U",
+        "Statistic":stat,
+        "P-value":p,
+        "Effect Size":np.nan,
+    })
