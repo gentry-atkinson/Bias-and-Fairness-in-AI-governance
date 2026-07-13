@@ -160,3 +160,34 @@ def mann_whitney_test(
 
     return stat, p
 
+
+def mann_whitney_test(
+    df,
+    outcome,
+    group,
+):
+
+    subset = df[
+        [outcome, group]
+    ].dropna()
+
+    levels = subset[group].unique()
+
+    if len(levels) != 2:
+        return np.nan, np.nan
+
+    g1 = subset[
+        subset[group] == levels[0]
+    ][outcome]
+
+    g2 = subset[
+        subset[group] == levels[1]
+    ][outcome]
+
+    stat, p = mannwhitneyu(
+        g1,
+        g2,
+        alternative="two-sided",
+    )
+
+    return stat, p
