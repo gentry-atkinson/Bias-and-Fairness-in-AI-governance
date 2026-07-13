@@ -300,7 +300,7 @@ def run():
 
     )
 
-    print(results)
+    print(results.to_string(index=False))
 
     print(
         "\nSaved inferential_statistics.csv"
