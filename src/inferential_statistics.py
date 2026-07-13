@@ -288,3 +288,27 @@ def run():
                 "Effect Size":effect,
 
             })
+
+    results = pd.DataFrame(results)
+
+    results.to_csv(
+
+        OUTPUT_DIR
+        / "inferential_statistics.csv",
+
+        index=False,
+
+    )
+
+    print(results)
+
+    print(
+        "\nSaved inferential_statistics.csv"
+    )
+
+    return results
+
+
+if __name__ == "__main__":
+
+    run()
