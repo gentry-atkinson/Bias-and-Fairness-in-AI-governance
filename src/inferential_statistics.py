@@ -129,37 +129,6 @@ def kruskal_test(
 
     return stat, p
 
-def mann_whitney_test(
-    df,
-    outcome,
-    group,
-):
-
-    subset = df[
-        [outcome, group]
-    ].dropna()
-
-    levels = subset[group].unique()
-
-    if len(levels) != 2:
-        return np.nan, np.nan
-
-    g1 = subset[
-        subset[group] == levels[0]
-    ][outcome]
-
-    g2 = subset[
-        subset[group] == levels[1]
-    ][outcome]
-
-    stat, p = mannwhitneyu(
-        g1,
-        g2,
-        alternative="two-sided",
-    )
-
-    return stat, p
-
 
 def mann_whitney_test(
     df,
@@ -191,6 +160,37 @@ def mann_whitney_test(
     )
 
     return stat, p
+
+
+def chi_square_test(
+    df,
+    outcome,
+    group,
+):
+    """
+    Chi-square test of independence between
+    a protected attribute and a binary outcome.
+    """
+
+    subset = df[
+        [outcome, group]
+    ].dropna()
+
+    table = pd.crosstab(
+        subset[group],
+        subset[outcome],
+    )
+
+    chi2, p, dof, _ = chi2_contingency(table)
+
+    effect = cramers_v(table)
+
+    return (
+        chi2,
+        p,
+        dof,
+        effect,
+    )
 
 
 def run():
