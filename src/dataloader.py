@@ -272,6 +272,23 @@ def load_pretrial_to_booking() -> pd.DataFrame:
     return df
 
 
+def load_mental_health_features() -> pd.DataFrame:
+    """Load generated mental health features."""
+    path = INTERIM_DATA_DIR / "mental_health_features.csv"
+
+    print(f"Loading: {path}")
+
+    return pd.read_csv(path)
+
+
+def load_prior_booking_features() -> pd.DataFrame:
+    """Load generated prior booking features."""
+    path = INTERIM_DATA_DIR / "prior_booking_counts_by_defendant.csv"
+
+    print(f"Loading: {path}")
+
+    return pd.read_csv(path)
+
 # ---------------------------------------------------------------------
 # Build pretrial dataframe
 # ---------------------------------------------------------------------
@@ -288,6 +305,8 @@ def build_pretrial_records_df() -> pd.DataFrame:
     defendants = load_pretrial_defendants()
     charges = load_pretrial_charge_interview()
     tcud = load_tcud_events()
+    mental_health = load_mental_health_features()
+    prior_bookings = load_prior_booking_features()
 
     # -------------------------------------------------------------
     # Standardize defendant-level fields
@@ -502,6 +521,45 @@ def build_pretrial_records_df() -> pd.DataFrame:
         on="PA_MAST_NO",
         how="left",
     )
+    
+    
+    df = df.merge(
+    mental_health,
+    on="person_mni",
+    how="left",
+    )
+
+    df = df.merge(
+        prior_bookings,
+        on="person_mni",
+        how="left",
+    )
+    
+
+    df["has_mental_health_flag"] = (
+        df["has_mental_health_flag"]
+        .fillna(0)
+        .astype(int)    
+    )
+
+    df["mental_health_event_count"] = (
+        df["mental_health_event_count"]
+        .fillna(0)
+        .astype(int)
+    )
+
+    df["prior_booking_count"] = (
+        df["prior_booking_count"]
+        .fillna(0)
+        .astype(int)
+    )
+
+    df["three_or_more_prior_bookings"] = (
+        df["three_or_more_prior_bookings"]
+        .fillna(False)
+        .astype(bool)
+    )
+
 
     # -------------------------------------------------------------
     # Derived variables
@@ -520,6 +578,8 @@ def build_pretrial_records_df() -> pd.DataFrame:
         bins=[0, 25, 35, 50, 120],
         labels=["18-25", "26-35", "36-50", "50+"],
     )
+    
+    
 
     # -------------------------------------------------------------
     # Rename columns to analysis names
