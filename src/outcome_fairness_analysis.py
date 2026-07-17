@@ -28,6 +28,9 @@ import numpy as np
 import pandas as pd
 
 
+from utils import clean_race_labels
+
+
 # ---------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------
@@ -223,6 +226,8 @@ def run():
         DATA_PATH,
         low_memory=False,
     )
+    
+    df = clean_race_labels(df)
 
     print(
         f"Loaded {len(df):,} rows × "

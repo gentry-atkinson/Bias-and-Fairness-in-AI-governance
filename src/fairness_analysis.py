@@ -21,6 +21,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from utils import clean_race_labels
+
+
 
 # ------------------------------------------------------------------
 # Paths
@@ -54,7 +57,7 @@ PROTECTED_ATTRIBUTES = {
     "age": "age_group",
 }
 
-HIGH_RISK_THRESHOLD = 7
+HIGH_RISK_THRESHOLD = 6
 
 # Additional thresholds for sensitivity analysis.
 # This helps us see whether group disparities depend on the cutoff.
@@ -63,7 +66,7 @@ HIGH_RISK_THRESHOLDS = [4, 5, 6, 7]
 # Reference groups for disparity comparisons.
 # These are temporary and should be confirmed with the professor.
 REFERENCE_GROUPS = {
-    "race": "W",
+    "race": "White",
     "sex": "F",
     "age_group": "18-25",
 }
@@ -262,7 +265,13 @@ def get_group_order(group_col):
     Define a clean display order for groups.
     """
     orders = {
-        "race": ["A", "B", "I", "U", "W"],
+        "race": [
+            "Asian",
+            "Black",
+            "American Indian / Alaska Native",
+            "Unknown",
+            "White",
+        ],
         "sex": ["F", "M"],
         "age_group": ["18-25", "26-35", "36-50", "50+"],
     }
@@ -475,6 +484,9 @@ def plot_risk_boxplot(df, group_col):
 def run():
 
     df = pd.read_csv(DATA_PATH)
+    
+    df = clean_race_labels(df)
+    
 
     print(
         f"Loaded {len(df):,} rows × "

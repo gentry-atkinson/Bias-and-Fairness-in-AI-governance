@@ -22,6 +22,10 @@ import matplotlib.pyplot as plt
 
 from scipy import stats
 
+from utils import clean_race_labels
+
+
+
 # -----------------------------------------------------
 # Paths
 # -----------------------------------------------------
@@ -126,6 +130,8 @@ def load_data():
     print(f"Loading {DATA_PATH}")
 
     df = pd.read_csv(DATA_PATH)
+    
+    df = clean_race_labels(df)
 
     print(
         f"Loaded {len(df):,} rows × {len(df.columns)} columns"
@@ -336,6 +342,8 @@ def plot_effect_sizes(stats_df):
     
 def run():
 
+    df = pd.read_csv(DATA_PATH)
+    
     df = load_data()
 
     stats_df = load_statistics()
