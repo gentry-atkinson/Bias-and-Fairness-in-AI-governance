@@ -1,9 +1,15 @@
 """
-inferential_statistics.py
--------------------------
+statistical_analysis.py
+-----------------------
 
-Inferential statistical testing for the Travis County
+Statistical analysis for the Travis County
 pretrial fairness audit.
+
+This script generates:
+
+• Descriptive statistics
+• Risk score association tests
+• Outcome association tests
 
 This script performs hypothesis testing for differences
 across protected groups.
@@ -21,7 +27,7 @@ Categorical Outcomes
 
 Outputs
 -------
-outputs/inferential_statistics.csv
+outputs/risk_score_association_summary.csv
 """
 
 from pathlib import Path
@@ -35,6 +41,7 @@ from scipy.stats import (
     mannwhitneyu,
 )
 
+from utils import clean_race_labels
 # ----------------------------------------------------
 # Paths
 # ----------------------------------------------------
@@ -57,11 +64,11 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 
 RISK_SCORE = "risk_score"
 
-PROTECTED_ATTRIBUTES = {
-    "race": "race",
-    "sex": "sex",
-    "age": "age_group",
-}
+# PROTECTED_ATTRIBUTES = {
+#     "race": "race",
+#     "sex": "sex",
+#     "age": "age_group",
+# }
 
 OUTCOME_COLUMNS = [
     "has_case_record",
@@ -162,6 +169,30 @@ def mann_whitney_test(
     return stat, p
 
 
+def descriptive_statistics(df, group):
+
+    summary = (
+        df.groupby(group)[RISK_SCORE]
+        .agg(
+            Count="count",
+            Mean="mean",
+            Median="median",
+            Std="std",
+            Minimum="min",
+            Maximum="max",
+        )
+        .round(3)
+        .reset_index()
+    )
+
+    summary.insert(
+        0,
+        "Protected Attribute",
+        group,
+    )
+
+    return summary
+
 def chi_square_test(
     df,
     outcome,
@@ -205,11 +236,44 @@ def run():
     )
 
     df = create_age_groups(df)
+    
+    df = clean_race_labels(df)
 
     results = []
+    
+    
+    race_summary = descriptive_statistics(
+        df,
+        "race",
+    )
+
+    sex_summary = descriptive_statistics(
+        df,
+        "sex",
+    )
+
+    age_summary = descriptive_statistics(
+        df,
+        "age_group",
+    )
+
+    descriptive = pd.concat(
+        [
+            race_summary,
+            sex_summary,
+            age_summary,
+        ],
+        ignore_index=True,
+    )
+
+    descriptive.to_csv(
+        OUTPUT_DIR
+        / "descriptive_statistics.csv",
+        index=False,
+    )
 
     # ------------------------------
-    # Risk score tests
+    # Risk score association tests
     # ------------------------------
 
     stat, p = kruskal_test(
@@ -289,24 +353,23 @@ def run():
 
             })
 
-    results = pd.DataFrame(results)
+    association_summary = pd.DataFrame(results)
 
-    results.to_csv(
+    association_summary.to_csv(
 
         OUTPUT_DIR
-        / "inferential_statistics.csv",
+        / "risk_score_association_summary.csv",
 
         index=False,
 
     )
 
-    print(results.to_string(index=False))
+    print(association_summary.to_string(index=False))
 
-    print(
-        "\nSaved inferential_statistics.csv"
-    )
+    print("\nSaved risk_score_association_summary.csv")
+    print("Saved descriptive_statistics.csv")
 
-    return results
+    return association_summary
 
 
 if __name__ == "__main__":
