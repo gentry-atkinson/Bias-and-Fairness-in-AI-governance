@@ -203,7 +203,7 @@ def plot_stacked_bar(summary, group_col):
 
         for value in container.datavalues:
 
-            if value < 3:
+            if value < 1:
                 labels.append("")
             else:
                 labels.append(f"{value:.1f}%")
