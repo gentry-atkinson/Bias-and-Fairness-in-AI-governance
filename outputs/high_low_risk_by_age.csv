@@ -1,0 +1,9 @@
+risk_group,age_group,count,percent
+High Risk,18-25,1029,26.82
+High Risk,26-35,1567,40.85
+High Risk,36-50,965,25.16
+High Risk,50+,275,7.17
+Low Risk,18-25,26582,32.57
+Low Risk,26-35,28937,35.45
+Low Risk,36-50,18899,23.15
+Low Risk,50+,7205,8.83

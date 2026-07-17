@@ -1,0 +1,5 @@
+risk_group,sex,count,percent
+High Risk,F,918,23.93
+High Risk,M,2918,76.07
+Low Risk,F,21611,26.48
+Low Risk,M,60012,73.52
