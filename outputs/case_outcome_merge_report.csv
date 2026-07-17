@@ -1,0 +1,6 @@
+metric,count,rate,total_rows
+has_case_record,77601,0.908,85459
+has_disposition,60276,0.7053,85459
+has_sentence,55245,0.6465,85459
+has_plea,34692,0.4059,85459
+has_verdict,9228,0.108,85459

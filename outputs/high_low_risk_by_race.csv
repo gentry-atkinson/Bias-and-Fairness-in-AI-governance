@@ -1,0 +1,13 @@
+risk_group,race,count,percent
+High Risk,"American Indian
+ / Alaska Native",2,0.05
+High Risk,Asian,19,0.5
+High Risk,Black,1264,32.95
+High Risk,Unknown,1,0.03
+High Risk,White,2550,66.48
+Low Risk,"American Indian
+ / Alaska Native",30,0.04
+Low Risk,Asian,1076,1.32
+Low Risk,Black,18573,22.75
+Low Risk,Unknown,64,0.08
+Low Risk,White,61880,75.81
