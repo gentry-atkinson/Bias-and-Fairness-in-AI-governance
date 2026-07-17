@@ -30,6 +30,7 @@ Outputs
 outputs/risk_score_association_summary.csv
 """
 
+from os import stat
 from pathlib import Path
 
 import numpy as np
@@ -112,6 +113,36 @@ def cramers_v(table):
     )
     
     
+def epsilon_squared_kruskal(H, n, k):
+    """
+    Effect size for the Kruskal-Wallis test.
+
+    Parameters
+    ----------
+    H : float
+        Kruskal-Wallis H statistic.
+    n : int
+        Total sample size.
+    k : int
+        Number of groups.
+
+    Returns
+    -------
+    float
+        Epsilon-squared effect size.
+    """
+
+    return (H - k + 1) / (n - k)
+
+
+def rank_biserial(U, n1, n2):
+    """
+    Rank-biserial correlation for the Mann-Whitney U test.
+    """
+
+    return 1 - (2 * U) / (n1 * n2)
+
+    
 def kruskal_test(
     df,
     outcome,
@@ -134,7 +165,16 @@ def kruskal_test(
 
     stat, p = kruskal(*groups)
 
-    return stat, p
+    n = len(subset)
+    k = len(groups)
+
+    effect = epsilon_squared_kruskal(
+        stat,
+        n,
+        k,
+    )
+
+    return stat, p, effect
 
 
 def mann_whitney_test(
@@ -165,8 +205,14 @@ def mann_whitney_test(
         g2,
         alternative="two-sided",
     )
+    
+    effect = rank_biserial(
+    stat,
+    len(g1),
+    len(g2),
+    )
 
-    return stat, p
+    return stat, p, effect
 
 
 def descriptive_statistics(df, group):
@@ -276,7 +322,7 @@ def run():
     # Risk score association tests
     # ------------------------------
 
-    stat, p = kruskal_test(
+    stat, p, effect = kruskal_test(
         df,
         RISK_SCORE,
         "race",
@@ -288,10 +334,10 @@ def run():
         "Test":"Kruskal-Wallis",
         "Statistic":stat,
         "P-value":p,
-        "Effect Size":np.nan,
+        "Effect Size":effect,
     })
 
-    stat, p = kruskal_test(
+    stat, p, effect = kruskal_test(
         df,
         RISK_SCORE,
         "age_group",
@@ -303,10 +349,10 @@ def run():
         "Test":"Kruskal-Wallis",
         "Statistic":stat,
         "P-value":p,
-        "Effect Size":np.nan,
+        "Effect Size":effect,
     })
 
-    stat, p = mann_whitney_test(
+    stat, p, effect = mann_whitney_test(
         df,
         RISK_SCORE,
         "sex",
@@ -318,7 +364,7 @@ def run():
         "Test":"Mann-Whitney U",
         "Statistic":stat,
         "P-value":p,
-        "Effect Size":np.nan,
+        "Effect Size":effect,
     })
 
     for outcome in OUTCOME_COLUMNS:
