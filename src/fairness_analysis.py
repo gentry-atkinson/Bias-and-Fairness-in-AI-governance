@@ -17,13 +17,17 @@ Outputs:
 
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 from utils import clean_race_labels
 
 
+
+from fairness_metrics import (
+    group_base_rate,
+    harsher_outcome_disparity,
+)
 
 # ------------------------------------------------------------------
 # Paths
@@ -101,7 +105,7 @@ def summarize_scores(df, group_col):
     """
 
     summary = (
-        df.groupby(group_col)[RISK_SCORE_COL]
+        df.groupby(group_col, observed=False)[RISK_SCORE_COL]
         .agg(
             count="count",
             mean="mean",
@@ -119,28 +123,63 @@ def summarize_scores(df, group_col):
 
 def statistical_parity(df, group_col):
     """
-    P(high risk | group)
-
-    Measures how often each group
-    receives a high-risk label.
+    Statistical parity difference for every pair of groups.
     """
 
-    parity = (
-        df.groupby(group_col)["high_risk"]
-        .mean()
-        .round(4)
-        .reset_index()
-    )
+    groups = sorted(df[group_col].dropna().unique())
 
-    parity.rename(
-        columns={
-            "high_risk": "high_risk_rate"
-        },
-        inplace=True,
-    )
+    rows = []
 
-    return parity
+    for i in range(len(groups)):
+        for j in range(i + 1, len(groups)):
+            g1 = groups[i]
+            g2 = groups[j]
 
+            subset = df[df[group_col].isin([g1, g2])]
+
+            disparity = group_base_rate(
+                subset["high_risk"].to_numpy(),
+                subset[group_col].to_numpy(),
+            )
+
+            rows.append(
+                {
+                    group_col: f"{g1} vs {g2}",
+                    "statistical_parity_difference": round(disparity, 4),
+                }
+            )
+
+    return pd.DataFrame(rows)
+
+def mean_score_disparity(df, group_col):
+    """
+    Difference in mean risk score between every pair of groups.
+    """
+
+    groups = sorted(df[group_col].dropna().unique())
+
+    rows = []
+
+    for i in range(len(groups)):
+        for j in range(i + 1, len(groups)):
+            g1 = groups[i]
+            g2 = groups[j]
+
+            subset = df[df[group_col].isin([g1, g2])]
+
+            disparity = harsher_outcome_disparity(
+                subset[RISK_SCORE_COL].to_numpy(),
+                subset[group_col].to_numpy(),
+            )
+
+            rows.append(
+                {
+                    group_col: f"{g1} vs {g2}",
+                    "mean_score_difference": round(disparity, 4),
+                }
+            )
+
+    return pd.DataFrame(rows)
 
 def threshold_sensitivity(df, group_col):
     """
@@ -536,6 +575,8 @@ def run():
     threshold_tables = []
     disparity_tables = []
 
+    score_disparity_tables = []
+
     for label, column in PROTECTED_ATTRIBUTES.items():
         
         print(
@@ -562,6 +603,14 @@ def run():
             column,
         )
 
+        score_disparity = mean_score_disparity(
+        fairness_df,
+        column,
+    )
+
+        print("\nMean Score Disparity")
+        print(score_disparity)
+
         print("\nRisk Scores")
         print(summary)
 
@@ -587,6 +636,13 @@ def run():
         threshold_tables.append(threshold_table)
         disparity_tables.append(disparity_table)
 
+        score_disparity["protected_attribute"] = column
+        score_disparity_tables.append(score_disparity)
+
+        plot_risk_distribution(
+            fairness_df,
+            column,
+    )
         plot_mean_risk_scores(summary, column)
 
         plot_high_risk_rate(parity, column)
@@ -619,6 +675,11 @@ def run():
         ignore_index=True,
     )
 
+    mean_score_disparity_df = pd.concat(
+        score_disparity_tables,
+        ignore_index=True,
+    )
+
     fairness_summary.to_csv(
         OUTPUT_DIR /
         "fairness_summary.csv",
@@ -630,6 +691,15 @@ def run():
         "statistical_parity.csv",
         index=False,
     )
+
+    mean_score_disparity_df.to_csv(
+    OUTPUT_DIR /
+    "mean_score_disparity.csv",
+    index=False,
+    )
+
+    print(
+        "\nSaved fairness_summary.csv"
     
     threshold_sensitivity_df.to_csv(
         OUTPUT_DIR / "threshold_sensitivity.csv",
@@ -641,6 +711,13 @@ def run():
         index=False,
     )
 
+    print(
+    "Saved mean_score_disparity.csv"
+    )
+
+    print(
+        "Saved risk distribution figures"
+    )
     print("\nSaved fairness_summary.csv")
     print("Saved statistical_parity.csv")
     print("Saved threshold_sensitivity.csv")
@@ -650,10 +727,10 @@ def run():
     return (
         fairness_summary,
         statistical_parity_df,
+        mean_score_disparity_df,
         threshold_sensitivity_df,
         disparity_df,
     )
-
 
 # ------------------------------------------------------------------
 # Entry Point
@@ -661,5 +738,5 @@ def run():
 
 if __name__ == "__main__":
 
-    fairness_summary, parity, threshold_sensitivity_df, disparity_df = run()
+    fairness_summary, parity, mean_score_disparity = run()
 
