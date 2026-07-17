@@ -4,7 +4,7 @@ RACE_MAP = {
     "W": "White",
     "B": "Black",
     "A": "Asian",
-    "I": "American Indian / Alaska Native",
+    "I": "American Indian\n / Alaska Native",
     "U": "Unknown"
 }
 
