@@ -26,9 +26,9 @@ import pandas as pd
 
 from dataloader import PROJECT_ROOT
 
-EDA_TABLE_DIR = PROJECT_ROOT / "reports" / "tables" / "travis_county_basic_eda"
-EDA_FIG_DIR = PROJECT_ROOT / "reports" / "figures" / "travis_county_basic_eda"
-GROUPED_FIG_DIR = PROJECT_ROOT / "reports" / "figures" / "travis_county_grouped_viz"
+EDA_TABLE_DIR = PROJECT_ROOT / "outputs" / "EDA tables" / "travis_county_basic_eda"
+EDA_FIG_DIR = PROJECT_ROOT / "figures" / "travis_county_basic_eda"
+GROUPED_FIG_DIR = PROJECT_ROOT / "figures" / "travis_county_grouped_viz"
 INTERIM_DATA_PATH = PROJECT_ROOT / "data" / "interim" / "travis_county_pretrial_analysis_df.csv"
 
 # ---------------------------------------------------------------------------
